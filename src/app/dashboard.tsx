@@ -1,126 +1,129 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; // 1. นำเข้า useRouter
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 export default function DashboardScreen() {
- const router = useRouter(); // 2. เรียกใช้งาน router
+ const router = useRouter();
  return (
-<SafeAreaView style={styles.safeArea}>
-<ScrollView style={styles.container}>
-       {/* HEADER */}
+<SafeAreaView style={styles.container}>
+     {/* 1. Header สไตล์ VANTA */}
 <View style={styles.header}>
-<View>
-<Text style={styles.headerTitle}>Inventor.io</Text>
-<Text style={styles.subTitle}>Home dashboard (Projector Store)</Text>
-</View>
-<TouchableOpacity style={styles.profileCircle}>
-<Ionicons name="person" size={20} color="#fff" />
+<TouchableOpacity>
+<Ionicons name="menu" size={26} color="#FFF" />
 </TouchableOpacity>
+<Text style={styles.headerTitle}>VANTA</Text>
+<View style={styles.avatar}>
+<Text style={styles.avatarText}>V</Text>
 </View>
-       {/* RECENT ACTIVITY */}
+</View>
+<ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+       {/* หัวข้อส่วนกิจกรรม */}
 <Text style={styles.sectionTitle}>Recent activity</Text>
-<View style={styles.row}>
-<ActivityCard number="241" label="NEW ITEMS" />
-<ActivityCard number="125" label="NEW ORDERS" />
-<ActivityCard number="12" label="REFUNDS" />
-<ActivityCard number="4" label="GROUPS" />
+       {/* 2. การ์ดตัวเลข จัดเรียงแถวละ 3 กล่องแบบรูปที่ 2 */}
+<View style={styles.statsGrid}>
+<View style={styles.statCard}>
+<Text style={styles.statNumber}>741</Text>
+<Text style={styles.statSub}>Qty</Text>
+<Text style={styles.statLabel}>NEW ITEMS</Text>
 </View>
-       {/* SALES CHART */}
-<Text style={styles.sectionTitle}>Sales</Text>
-<View style={styles.chartCard}>
+<View style={styles.statCard}>
+<Text style={styles.statNumber}>123</Text>
+<Text style={styles.statSub}>Qty</Text>
+<Text style={styles.statLabel}>NEW ORDERS</Text>
+</View>
+<View style={styles.statCard}>
+<Text style={styles.statNumber}>12</Text>
+<Text style={styles.statSub}>Qty</Text>
+<Text style={styles.statLabel}>REFUNDS</Text>
+</View>
+<View style={styles.statCard}>
+<Text style={styles.statNumber}>1</Text>
+<Text style={styles.statSub}>Qty</Text>
+<Text style={styles.statLabel}>MESSAGE</Text>
+</View>
+<View style={styles.statCard}>
+<Text style={styles.statNumber}>4</Text>
+<Text style={styles.statSub}>Qty</Text>
+<Text style={styles.statLabel}>GROUPS</Text>
+</View>
+<View style={[styles.statCard, styles.viewMoreCard]}>
+<Ionicons name="arrow-forward-box" size={24} color="#FFF" style={styles.viewMoreIcon} />
+<Text style={styles.viewMoreText}>VIEW MORE</Text>
+</View>
+</View>
+       {/* 3. โซนกราฟแท่ง Sales Volume */}
+<Text style={styles.sectionTitle}>Sales Volume</Text>
 <View style={styles.chartContainer}>
-<View style={[styles.bar, { height: '40%' }]} />
-<View style={[styles.bar, { height: '80%' }]} />
-<View style={[styles.bar, { height: '60%' }]} />
-<View style={[styles.bar, { height: '100%' }]} />
+<View style={styles.chartRow}>
+           {/* แท่งกราฟแต่ละแท่ง */}
+<View style={styles.barWrapper}>
 <View style={[styles.bar, { height: '50%' }]} />
+<Text style={styles.barLabel}>Confirmed</Text>
 </View>
-<View style={styles.chartDivider} />
-<View style={styles.chartLegend}>
-<Text style={styles.legendText}>Confirmed</Text>
-<Text style={styles.legendText}>Packed</Text>
-<Text style={styles.legendText}>Refunded</Text>
-<Text style={styles.legendText}>Shipped</Text>
+<View style={styles.barWrapper}>
+<View style={[styles.bar, { height: '85%' }]} />
+<Text style={styles.barLabel}>Pooled</Text>
+</View>
+<View style={styles.barWrapper}>
+<View style={[styles.bar, { height: '35%' }]} />
+<Text style={styles.barLabel}>Refunded</Text>
+</View>
+<View style={styles.barWrapper}>
+<View style={[styles.bar, { height: '90%' }]} />
+<Text style={styles.barLabel}>Shipped</Text>
 </View>
 </View>
-       {/* TOP ITEM CATEGORIES */}
-<Text style={styles.sectionTitle}>Top item categories</Text>
-<View style={styles.row}>
-<CategoryIcon icon="videocam" color="#4F46E5" /> {/* เปลี่ยนเป็นไอคอนกล้อง/โปรเจคเตอร์ */}
-<CategoryIcon icon="tv" color="#1E1B4B" />
-<CategoryIcon icon="hardware-handle" color="#4F46E5" />
-<CategoryIcon icon="cable" color="#1E1B4B" />
-<CategoryIcon icon="ellipsis-horizontal" color="#9CA3AF" />
 </View>
-       {/* 3. ผูกปุ่มเมนูให้กดไปหน้าคลังสินค้า (Stock) */}
-<View style={styles.tableCard}>
-<Text style={styles.tableTitle}>ระบบจัดการสินค้า</Text>
-<TouchableOpacity onPress={() => router.push('/stock')}>
-<TableRow label="📦 ดูสต็อกสินค้าโปรเจคเตอร์" value="12 รุ่น" />
-</TouchableOpacity>
-<TableRow label="Item categories" value="6" />
-<TableRow label="Refunded items" value="1" />
-</View>
-<View style={{ height: 100 }} />
 </ScrollView>
-     {/* BOTTOM NAVIGATION BAR */}
-<View style={styles.bottomNav}>
-<TouchableOpacity onPress={() => router.replace('/dashboard')}>
-<Ionicons name="home" size={24} color="#4F46E5" />
+     {/* 4. แถบเมนูด้านล่าง (Navigation Bar) ที่กดเครื่องหมายบวก (+) แล้วเปิดหน้าเพิ่มสินค้าได้จริง */}
+<View style={styles.navBar}>
+<TouchableOpacity style={styles.navItem}>
+<Ionicons name="home" size={22} color="#9CA3AF" />
+<Text style={[styles.navText, { color: '#9CA3AF' }]}>Home</Text>
 </TouchableOpacity>
-       {/* 4. ผูกปุ่มเครื่องหมายบวกตรงกลาง ให้กดเปิดหน้าเพิ่มสินค้า (Add Product) */}
-<TouchableOpacity onPress={() => router.push('/add-product')}>
-<Ionicons name="add-circle" size={36} color="#1E1B4B" />
+       {/* ปุ่มเครื่องหมายบวก ผูกคำสั่งย้ายหน้าตรงนี้ค่ะ! */}
+<TouchableOpacity style={styles.navItem} onPress={() => router.push('/add-product')}>
+<Ionicons name="add" size={28} color="#6366F1" style={styles.addIconActive} />
+<Text style={[styles.navText, { color: '#6366F1', fontWeight: 'bold' }]}>Add</Text>
 </TouchableOpacity>
-<TouchableOpacity onPress={() => router.push('/stock')}>
-<Ionicons name="cube-outline" size={24} color="#9CA3AF" />
+<TouchableOpacity style={styles.navItem}>
+<MaterialCommunityIcons name="cube-outline" size={22} color="#9CA3AF" />
+<Text style={styles.navText}>Products</Text>
 </TouchableOpacity>
-<Ionicons name="person-outline" size={24} color="#9CA3AF" />
+<TouchableOpacity style={styles.navItem}>
+<Ionicons name="git-network-outline" size={22} color="#9CA3AF" />
+<Text style={styles.navText}>Categories</Text>
+</TouchableOpacity>
 </View>
 </SafeAreaView>
  );
 }
-// --- SUB-COMPONENTS เหมือนเดิม ---
-const ActivityCard = ({ number, label }: { number: string, label: string }) => (
-<View style={styles.miniCard}>
-<Text style={styles.miniCardNumber}>{number}</Text>
-<Text style={styles.miniCardLabel}>{label}</Text>
-</View>
-);
-const CategoryIcon = ({ icon, color }: { icon: any, color: string }) => (
-<View style={styles.categoryIconContainer}>
-<Ionicons name={icon} size={24} color={color} />
-</View>
-);
-const TableRow = ({ label, value }: { label: string, value?: string }) => (
-<View style={styles.tableRow}>
-<Text style={styles.tableLabel}>{label}</Text>
-   {value && <Text style={styles.tableValue}>{value}</Text>}
-<Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-</View>
-);
 const styles = StyleSheet.create({
- safeArea: { flex: 1, backgroundColor: '#F3F4F6' },
- container: { flex: 1, padding: 20 },
- header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, paddingTop: 10 },
- headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#1E1B4B' },
- subTitle: { fontSize: 14, color: '#6B7280' },
- profileCircle: { backgroundColor: '#1E1B4B', padding: 8, borderRadius: 20 },
- sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#1E1B4B', marginVertical: 12 },
- row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
- miniCard: { backgroundColor: '#fff', flex: 1, marginHorizontal: 4, paddingVertical: 15, borderRadius: 12, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
- miniCardNumber: { fontSize: 18, fontWeight: 'bold', color: '#1E1B4B' },
- miniCardLabel: { fontSize: 8, color: '#9CA3AF', marginTop: 4 },
- chartCard: { backgroundColor: '#fff', borderRadius: 15, padding: 20, height: 180 },
- chartContainer: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around' },
- bar: { width: 12, backgroundColor: '#4F46E5', borderRadius: 10 },
- chartDivider: { height: 1, backgroundColor: '#E5E7EB', marginVertical: 10 },
- chartLegend: { flexDirection: 'row', justifyContent: 'space-between' },
- legendText: { fontSize: 8, color: '#9CA3AF' },
- categoryIconContainer: { backgroundColor: '#E0E7FF', padding: 12, borderRadius: 12, width: 55, height: 55, alignItems: 'center', justifyContent: 'center' },
- tableCard: { backgroundColor: '#fff', borderRadius: 15, padding: 15, marginTop: 15 },
- tableTitle: { fontSize: 14, fontWeight: 'bold', color: '#1E1B4B', marginBottom: 10 },
- tableRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#F3F4F6', alignItems: 'center' },
- tableLabel: { fontSize: 13, color: '#4B5563' },
- tableValue: { fontSize: 13, fontWeight: 'bold', color: '#1E1B4B' },
- bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', height: 70, borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingBottom: 10 }
+ container: { flex: 1, backgroundColor: '#E5E7EB' },
+ scrollContainer: { padding: 16, paddingBottom: 100 },
+ // Header
+ header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111827', paddingHorizontal: 16, paddingVertical: 14 },
+ headerTitle: { fontSize: 20, fontWeight: '900', color: '#FFF', letterSpacing: 2 },
+ avatar: { backgroundColor: '#D1D5DB', width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+ avatarText: { fontWeight: 'bold', color: '#111827' },
+ sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937', marginTop: 20, marginBottom: 12 },
+ // รีเซ็ตสไตล์การ์ดเป็น แถวละ 3 กล่อง
+ statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+ statCard: { backgroundColor: '#FFF', width: '31%', padding: 12, borderRadius: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#E5E7EB' },
+ statNumber: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
+ statSub: { fontSize: 10, color: '#9CA3AF', marginVertical: 2 },
+ statLabel: { fontSize: 9, fontWeight: 'bold', color: '#4B5563', textAlign: 'center' },
+ viewMoreCard: { justifyContent: 'center', backgroundColor: '#FFF' },
+ viewMoreIcon: { backgroundColor: '#2563EB', padding: 4, borderRadius: 6, overflow: 'hidden' },
+ viewMoreText: { fontSize: 9, fontWeight: 'bold', color: '#2563EB', marginTop: 4 },
+ // โซนกราฟแท่ง Sales Volume
+ chartContainer: { backgroundColor: '#D9D9F3', borderRadius: 16, padding: 20, height: 200, justifyContent: 'flex-end' },
+ chartRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', height: '100%' },
+ barWrapper: { alignItems: 'center', flex: 1, height: '100%', justifyContent: 'flex-end' },
+ bar: { backgroundColor: '#312E81', width: 22, borderRadius: 6 },
+ barLabel: { fontSize: 10, color: '#4B5563', marginTop: 8, fontWeight: '500' },
+ // แถบเมนูด้านล่าง
+ navBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 65, backgroundColor: '#111827', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#374151' },
+ navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
+ navText: { fontSize: 10, color: '#9CA3AF', marginTop: 4 },
+ addIconActive: { backgroundColor: '#FFF', borderRadius: 20, paddingHorizontal: 6 },
 });
