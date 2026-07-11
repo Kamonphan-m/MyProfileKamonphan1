@@ -30,11 +30,22 @@ export default function StockScreen() {
         let currentList = savedData !== null ? JSON.parse(savedData) : INITIAL_PROJECTOR_DATA;
 
         const finalName = newProductName || productName || name;
+        
+        // 🛠️ แก้ไขเพิ่มตรงนี้: ถ้าไม่มีการส่งข้อมูลสินค้าใหม่มา (เช่น เปลี่ยนหน้าไปมาปกติ)
+        // ให้แสดงรายการปัจจุบันที่มีอยู่ แล้วจบฟังก์ชันทันที รูปจะได้ไม่หายค่ะ
+        if (!finalName) {
+          const verifiedList = currentList.map((item: any) => ({
+            ...item,
+            image: item.image && typeof item.image === 'string' ? item.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
+          }));
+          setProjectors(verifiedList);
+          return;
+        }
+
         const finalPrice = newProductPrice || productPrice || price;
         const finalBrand = newProductBrand || productBrand || brand;
         const finalStock = newProductStock || productStock || stock;
         
-        // ตรวจสอบตัวแปรภาพอย่างเข้มงวด
         let finalImage = newProductImage || productImage || imageUri || image;
         let validImageUri = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400';
         
@@ -70,7 +81,6 @@ export default function StockScreen() {
           });
         }
 
-        // เช็คความสมบูรณ์ของภาพทุกรูปในลิสต์ก่อนนำไปโชว์
         const verifiedList = currentList.map((item: any) => ({
           ...item,
           image: item.image && typeof item.image === 'string' ? item.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
@@ -83,7 +93,7 @@ export default function StockScreen() {
     };
 
     handleSyncData();
-  }, [newProductName, productName, name, newProductPrice, productPrice, price]);
+  }, [newProductName, productName, name, newProductPrice, productPrice, price]); // รันเฉพาะเมื่อมีข้อมูลสินค้าใหม่ถูกส่งเข้ามา
 
   const handleDelete = async (id: string) => {
     const updatedData = projectors.filter(item => item.id !== id);

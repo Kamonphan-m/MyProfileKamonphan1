@@ -23,9 +23,14 @@ export default function CategoriesScreen() {
           <Ionicons name="menu" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.vantaTitle}>VANTA</Text>
-        <View style={styles.vantaAvatar}>
+        
+        {/* 🛠️ แก้ไข: เปลี่ยนเป็น TouchableOpacity และใส่ router.push เพื่อให้กดแล้วไปหน้า Profile Settings ได้จริง */}
+        <TouchableOpacity 
+          style={styles.vantaAvatar}
+          onPress={() => router.push('/profile-settings')}
+        >
           <Text style={styles.avatarText}>V</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.contentBody}>
