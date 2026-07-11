@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // นำเข้าตัวจำข้อมูลถาวร
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-// 1. ข้อมูลเริ่มต้น (ใส่รูปตัวอย่างเริ่มต้นให้สวยงาม)
 const INITIAL_PROJECTOR_DATA = [
   { id: '1', name: 'Epson EB-X06', price: '14,500 บ.', stock: 5, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
   { id: '2', name: 'BenQ TH585P', price: '21,900 บ.', stock: 2, status: 'สต็อกน้อย', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
@@ -14,13 +14,29 @@ export default function StockScreen() {
   const params = useLocalSearchParams();
   const { newProductName, newProductBrand, newProductPrice, newProductStock, newProductImage } = params;
 
-  const [projectors, setProjectors] = useState(INITIAL_PROJECTOR_DATA);
+  const [projectors, setProjectors] = useState<any[]>([]);
 
-  // 2. ดักรับค่าสินค้าใหม่จากหน้าเพิ่มสินค้า
+  // 1. โหลดข้อมูลที่เคยบันทึกไว้ในเครื่องขึ้นมาตอนเปิดหน้าจอครั้งแรก
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const savedData = await AsyncStorage.getItem('@projector_products');
+        if (savedData !== null) {
+          setProjectors(JSON.parse(savedData));
+        } else {
+          setProjectors(INITIAL_PROJECTOR_DATA);
+        }
+      } catch (e) {
+        setProjectors(INITIAL_PROJECTOR_DATA);
+      }
+    };
+    loadProducts();
+  }, []);
+
+  // 2. ดักรับค่าสินค้าใหม่ และบันทึกเก็บไว้ในระบบถาวร
   useEffect(() => {
     if (newProductName && newProductPrice) {
       const stockNum = parseInt(newProductStock as string, 10) || 0;
-      
       let calculatedStatus = 'มีสินค้า';
       if (stockNum === 0) {
         calculatedStatus = 'สินค้าหมด';
@@ -34,21 +50,27 @@ export default function StockScreen() {
         price: `${Number(newProductPrice).toLocaleString()} บ.`,
         stock: stockNum,
         status: calculatedStatus,
-        // ถ้ารูปถ่ายจากหน้ากล่องมี ให้ใช้รูปนั้น ถ้าไม่มีให้ดึงรูปโปรเจคเตอร์ตัวอย่างมาโชว์
         image: (newProductImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
       };
 
+      // บันทึกและอัปเดตลงเครื่องทันที
       setProjectors((prevData) => {
+        // ตรวจสอบข้อมูลซ้ำ
         const isExist = prevData.some(item => item.name === newProduct.name);
         if (isExist) return prevData;
-        return [newProduct, ...prevData]; // เอาตัวใหม่ล่าสุดโชว์บนสุด
+        
+        const updatedData = [newProduct, ...prevData];
+        AsyncStorage.setItem('@projector_products', JSON.stringify(updatedData));
+        return updatedData;
       });
     }
   }, [newProductName, newProductBrand, newProductPrice, newProductStock, newProductImage]);
 
-  // ฟังก์ชันสำหรับกดลบสินค้า (หนูสามารถกดลบตัวที่ไม่ต้องการออกได้เลยค่ะ)
-  const handleDelete = (id: string) => {
-    setProjectors(projectors.filter(item => item.id !== id));
+  // 3. ฟังก์ชันสำหรับกดลบสินค้า (ลบแล้วอัปเดตความจำเครื่องถาวร ไม่เด้งกลับมาอีก)
+  const handleDelete = async (id: string) => {
+    const updatedData = projectors.filter(item => item.id !== id);
+    setProjectors(updatedData);
+    await AsyncStorage.setItem('@projector_products', JSON.stringify(updatedData));
   };
 
   return (
@@ -73,9 +95,7 @@ export default function StockScreen() {
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
             <View style={styles.leftContent}>
-              {/* 📸 เพิ่มการแสดงผลรูปภาพโปรเจคเตอร์ */}
               <Image source={{ uri: item.image }} style={styles.productImage} />
-              
               <View style={styles.infoContainer}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemPrice}>ราคา: {item.price}</Text>
@@ -94,7 +114,6 @@ export default function StockScreen() {
                 {item.status}
               </Text>
               
-              {/* ปุ่มลบสินค้าสำหรับจัดการข้อมูลที่กรอกผิด */}
               <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
                 <Ionicons name="trash-outline" size={16} color="#EF4444" />
               </TouchableOpacity>
