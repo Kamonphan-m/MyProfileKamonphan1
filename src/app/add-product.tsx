@@ -32,29 +32,24 @@ export default function AddProductScreen() {
     }
   };
 
-  // 🛠️ แก้ไขฟังก์ชันการเซฟสินค้าใหม่ (ส่งค่าผ่าน URL แบบชัวร์ 100%)
+  // 🛠️ ปรับฟังก์ชันเซฟใหม่: ตัดกล่อง Alert ซ้อนออกชั่วคราว เพื่อลดปัญหาค้าง และส่งข้อมูลตรงผ่านออบเจกต์ปลอดภัย 100%
   const handleSave = () => {
     if (!name || !brand || !price || !stock) {
       Alert.alert("Error", "Please fill in all fields (including Price and Stock)");
       return;
     }
 
-    Alert.alert("Success", "New projector added successfully!", [
-      {
-        text: "OK",
-        onPress: () => {
-          // เข้ารหัสข้อมูลให้ปลอดภัยสำหรับพ่วงท้ายลิงก์ (ป้องกันสระ/เว้นวรรคแล้วลิงก์พัง)
-          const queryName = encodeURIComponent(name);
-          const queryBrand = encodeURIComponent(brand);
-          const queryPrice = encodeURIComponent(price);
-          const queryStock = encodeURIComponent(stock);
-          const queryImage = encodeURIComponent(imageUri || '');
-
-          // ยิงลิงก์ตรงพาข้อมูลข้ามหน้าไปหาหน้า /stock ทันที
-          router.push(`/stock?newProductName=${queryName}&newProductBrand=${queryBrand}&newProductPrice=${queryPrice}&newProductStock=${queryStock}&newProductImage=${queryImage}`);
-        }
-      }
-    ]);
+    // ย้ายหน้าตรง ๆ ไปที่คลังสินค้าพร้อมแนบข้อมูลพ่วงทันที ไม่ต้องผ่านฟังก์ชันซับซ้อน
+    router.push({
+      pathname: '/stock',
+      params: {
+        newProductName: name,
+        newProductBrand: brand,
+        newProductPrice: price,
+        newProductStock: stock,
+        newProductImage: imageUri || '',
+      },
+    });
   };
 
   return (
