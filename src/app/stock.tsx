@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // นำเข้าตัวจำข้อมูลถาวร
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -16,57 +16,51 @@ export default function StockScreen() {
 
   const [projectors, setProjectors] = useState<any[]>([]);
 
-  // 1. โหลดข้อมูลที่เคยบันทึกไว้ในเครื่องขึ้นมาตอนเปิดหน้าจอครั้งแรก
+  // 1. ฟังก์ชันโหลดข้อมูลและจัดการแอดตัวใหม่ (รวบมาทำงานร่วมกันเพื่อความเสถียร ชิ้นที่สองจะได้ไม่หาย)
   useEffect(() => {
-    const loadProducts = async () => {
+    const handleSyncData = async () => {
       try {
+        // ดึงข้อมูลเก่าที่เซฟไว้ในเครื่องขึ้นมาก่อน
         const savedData = await AsyncStorage.getItem('@projector_products');
-        if (savedData !== null) {
-          setProjectors(JSON.parse(savedData));
-        } else {
-          setProjectors(INITIAL_PROJECTOR_DATA);
+        let currentList = savedData !== null ? JSON.parse(savedData) : INITIAL_PROJECTOR_DATA;
+
+        // ถ้ามีข้อมูลชิ้นใหม่ส่งมาจากหน้า Add Product
+        if (newProductName && newProductPrice) {
+          const stockNum = parseInt(newProductStock as string, 10) || 0;
+          let calculatedStatus = 'มีสินค้า';
+          if (stockNum === 0) {
+            calculatedStatus = 'สินค้าหมด';
+          } else if (stockNum <= 2) {
+            calculatedStatus = 'สต็อกน้อย';
+          }
+
+          const newProduct = {
+            id: Date.now().toString(), // ใช้เวลาปัจจุบันทำ ID ชิ้นที่สองจะไม่มีทางซ้ำ
+            name: `${newProductBrand ? newProductBrand + ' ' : ''}${newProductName}`,
+            price: `${Number(newProductPrice).toLocaleString()} บ.`,
+            stock: stockNum,
+            status: calculatedStatus,
+            image: (newProductImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
+          };
+
+          // 🛠️ แก้ไขตรงนี้: ปลดล็อกระบบเช็คชื่อซ้ำออกแล้ว เพื่อให้เพิ่มชิ้นต่อ ๆ ไปได้ตลอดเวลา
+          currentList = [newProduct, ...currentList];
+          await AsyncStorage.setItem('@projector_products', JSON.stringify(currentList));
+          
+          // ล้างเคลียร์ params ทิ้งเพื่อไม่ให้มันแอดซ้ำตอนรีเฟรชหน้าจอ
+          router.setParams({ newProductName: '', newProductPrice: '' });
         }
+
+        setProjectors(currentList);
       } catch (e) {
-        setProjectors(INITIAL_PROJECTOR_DATA);
+        console.log(e);
       }
     };
-    loadProducts();
-  }, []);
 
-  // 2. ดักรับค่าสินค้าใหม่ และบันทึกเก็บไว้ในระบบถาวร
-  useEffect(() => {
-    if (newProductName && newProductPrice) {
-      const stockNum = parseInt(newProductStock as string, 10) || 0;
-      let calculatedStatus = 'มีสินค้า';
-      if (stockNum === 0) {
-        calculatedStatus = 'สินค้าหมด';
-      } else if (stockNum <= 2) {
-        calculatedStatus = 'สต็อกน้อย';
-      }
+    handleSyncData();
+  }, [newProductName, newProductPrice]);
 
-      const newProduct = {
-        id: Date.now().toString(),
-        name: `${newProductBrand ? newProductBrand + ' ' : ''}${newProductName}`,
-        price: `${Number(newProductPrice).toLocaleString()} บ.`,
-        stock: stockNum,
-        status: calculatedStatus,
-        image: (newProductImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
-      };
-
-      // บันทึกและอัปเดตลงเครื่องทันที
-      setProjectors((prevData) => {
-        // ตรวจสอบข้อมูลซ้ำ
-        const isExist = prevData.some(item => item.name === newProduct.name);
-        if (isExist) return prevData;
-        
-        const updatedData = [newProduct, ...prevData];
-        AsyncStorage.setItem('@projector_products', JSON.stringify(updatedData));
-        return updatedData;
-      });
-    }
-  }, [newProductName, newProductBrand, newProductPrice, newProductStock, newProductImage]);
-
-  // 3. ฟังก์ชันสำหรับกดลบสินค้า (ลบแล้วอัปเดตความจำเครื่องถาวร ไม่เด้งกลับมาอีก)
+  // 2. ฟังก์ชันกดลบสินค้า
   const handleDelete = async (id: string) => {
     const updatedData = projectors.filter(item => item.id !== id);
     setProjectors(updatedData);
