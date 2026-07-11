@@ -34,7 +34,7 @@ export default function DashboardScreen() {
           <View style={{ width: 28 }} />
         </View>
 
-        {/* จัดระเบียบรายการเมนูใน Sidebar ให้อยู่ภายใต้บล็อกเดียวกันอย่างถูกต้อง */}
+        {/* รายการเมนูใน Sidebar */}
         <ScrollView style={styles.sidebarMenu} showsVerticalScrollIndicator={false}>
           <TouchableOpacity
             style={[styles.sidebarItem, styles.sidebarItemActive]}
@@ -70,7 +70,7 @@ export default function DashboardScreen() {
             style={styles.sidebarItem}
             onPress={() => {
               toggleMenu();
-              router.push('/dashboard');
+              router.push('/categories'); // 🛠️ แก้ไขให้ลิงก์ไปหน้าหมวดหมู่สินค้า
             }}
           >
             <Text style={styles.sidebarIcon}>🧬</Text>
@@ -81,7 +81,7 @@ export default function DashboardScreen() {
             style={styles.sidebarItem}
             onPress={() => {
               toggleMenu();
-              router.push('/login');
+              router.push('/login'); // หรือเปลี่ยนเป็นหน้าแก้ไขโปรไฟล์ที่ตั้งไว้
             }}
           >
             <Text style={styles.sidebarIcon}>⚙️</Text>
@@ -100,7 +100,7 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* ฉากหลังสีดำโปร่งแสงเมื่อเมนูเปิดออกมา เพื่อให้กดปิดเมนูได้ง่าย */}
+      {/* ฉากหลังสีดำโปร่งแสงเมื่อเมนูเปิดออกมา */}
       {isMenuOpen && (
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={toggleMenu} />
       )}
@@ -108,11 +108,12 @@ export default function DashboardScreen() {
       {/* ==================== 3. หน้าหลักแอป (Main Content) ==================== */}
       {/* Header ของแอป */}
       <View style={styles.header}>
-        {/* ผูกฟังก์ชัน toggleMenu เข้ากับปุ่ม 3 ขีดมุมบนซ้าย */}
         <TouchableOpacity onPress={toggleMenu}>
           <Ionicons name="menu" size={26} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>VANTA</Text>
+        
+        {/* 🛠️ ปุ่มวงกลมตัว V: เปลี่ยนให้กดแล้วไปหน้า /login (Personal Settings ของเรา) ไม่หลุดไปหน้าล็อกอินเริ่มต้น */}
         <TouchableOpacity style={styles.avatar} onPress={() => router.push('/login')}>
           <Text style={styles.avatarText}>V</Text>
         </TouchableOpacity>
@@ -148,8 +149,7 @@ export default function DashboardScreen() {
             <Text style={styles.statLabel}>GROUPS</Text>
           </View>
           
-          <TouchableOpacity style={[styles.statCard, styles.viewMoreCard]} onPress={() => router.push('/dashboard')}>
-            {/* 🛠️ แก้ไขจาก arrow-forward-box เป็น arrow-forward-circle เพื่อให้ตรงตามชุด Ionicons */}
+          <TouchableOpacity style={[styles.statCard, styles.viewMoreCard]} onPress={() => router.push('/stock')}>
             <Ionicons name="arrow-forward-circle" size={24} color="#FFF" style={styles.viewMoreIcon} />
             <Text style={styles.viewMoreText}>VIEW MORE</Text>
           </TouchableOpacity>
@@ -180,23 +180,26 @@ export default function DashboardScreen() {
  
       {/* ==================== 4. แถบเมนูด้านล่าง (Navigation Bar) ==================== */}
       <View style={styles.navBar}>
-        {/* ปุ่ม Home (หน้าปัจจุบัน) */}
+        {/* ปุ่ม Home */}
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="home" size={22} color="#6366F1" />
           <Text style={[styles.navText, { color: '#6366F1', fontWeight: 'bold' }]}>Home</Text>
         </TouchableOpacity>
+        
         {/* ปุ่ม Add สำหรับย้ายไปหน้าเพิ่มสินค้า */}
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/add-product')}>
           <Ionicons name="add" size={28} color="#9CA3AF" style={styles.addIcon} />
           <Text style={styles.navText}>Add</Text>
         </TouchableOpacity>
+        
         {/* ปุ่ม Products สำหรับย้ายไปหน้ารายการสินค้า */}
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stock')}>
           <MaterialCommunityIcons name="cube-outline" size={22} color="#9CA3AF" />
           <Text style={styles.navText}>Products</Text>
         </TouchableOpacity>
-        {/* ปุ่ม Categories สำหรับย้ายไปหน้าหมวดหมู่ */}
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/dashboard')}>
+        
+        {/* ปุ่ม Categories (🛠️ แก้ไขให้กดแล้วย้ายไปหน้าแบ่งหมวดหมู่สินค้า /categories แทนการกลับมาหน้าหลัก) */}
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/categories')}>
           <Ionicons name="git-network-outline" size={22} color="#9CA3AF" />
           <Text style={styles.navText}>Categories</Text>
         </TouchableOpacity>
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
   bar: { backgroundColor: '#312E81', width: 22, borderRadius: 6 },
   barLabel: { fontSize: 10, color: '#4B5563', marginTop: 8, fontWeight: '500' },
   navBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 65, backgroundColor: '#111827', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#374151', zIndex: 10 },
-navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
+  navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   navText: { fontSize: 10, color: '#9CA3AF', marginTop: 4 },
   addIcon: { backgroundColor: 'transparent' },
   sidebar: { position: 'absolute', top: 0, bottom: 0, width: '70%', backgroundColor: '#111827', padding: 20, zIndex: 100, shadowColor: '#000', shadowOffset: { width: 5, height: 0 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 16 },
