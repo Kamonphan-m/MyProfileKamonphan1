@@ -1,31 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-// จำลองข้อมูลเริ่มต้นในร้าน
+// 1. ข้อมูลเริ่มต้น (ใส่รูปตัวอย่างเริ่มต้นให้สวยงาม)
 const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'Epson EB-X06', price: '14,500 บ.', stock: 5, status: 'มีสินค้า' },
-  { id: '2', name: 'BenQ TH585P', price: '21,900 บ.', stock: 2, status: 'สต็อกน้อย' },
-  { id: '3', name: 'Acer X1126AH', price: '11,900 บ.', stock: 0, status: 'สินค้าหมด' },
+  { id: '1', name: 'Epson EB-X06', price: '14,500 บ.', stock: 5, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
+  { id: '2', name: 'BenQ TH585P', price: '21,900 บ.', stock: 2, status: 'สต็อกน้อย', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
 ];
 
 export default function StockScreen() {
   const router = useRouter();
-  
-  // 🛠️ 1. ดึงค่า Params ที่ส่งมาจากหน้า add-product
   const params = useLocalSearchParams();
-  const { newProductName, newProductBrand, newProductPrice, newProductStock } = params;
+  const { newProductName, newProductBrand, newProductPrice, newProductStock, newProductImage } = params;
 
-  // 🛠️ 2. เปลี่ยนมาใช้ useState เพื่อให้ข้อมูลอัปเดตและเพิ่มเข้าลิสต์ได้จริง
   const [projectors, setProjectors] = useState(INITIAL_PROJECTOR_DATA);
 
-  // 🛠️ 3. ตรวจจับว่ามีข้อมูลส่งมาจากหน้า Add ไหม ถ้ามีให้เอามาต่อหัวลิสต์
+  // 2. ดักรับค่าสินค้าใหม่จากหน้าเพิ่มสินค้า
   useEffect(() => {
-    if (newProductName && newProductPrice && newProductStock) {
+    if (newProductName && newProductPrice) {
       const stockNum = parseInt(newProductStock as string, 10) || 0;
       
-      // ฟังก์ชันคำนวณสถานะอัตโนมัติจากจำนวนสต็อกที่กรอก
       let calculatedStatus = 'มีสินค้า';
       if (stockNum === 0) {
         calculatedStatus = 'สินค้าหมด';
@@ -34,32 +29,39 @@ export default function StockScreen() {
       }
 
       const newProduct = {
-        id: Date.now().toString(), // สร้าง ID แบบไม่ซ้ำกัน
+        id: Date.now().toString(),
         name: `${newProductBrand ? newProductBrand + ' ' : ''}${newProductName}`,
-        price: `${Number(newProductPrice).toLocaleString()} บ.`, // แปลงเป็นฟอร์แมตเงินบาทให้สวยงาม
+        price: `${Number(newProductPrice).toLocaleString()} บ.`,
         stock: stockNum,
-        status: calculatedStatus
+        status: calculatedStatus,
+        // ถ้ารูปถ่ายจากหน้ากล่องมี ให้ใช้รูปนั้น ถ้าไม่มีให้ดึงรูปโปรเจคเตอร์ตัวอย่างมาโชว์
+        image: (newProductImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
       };
 
-      // ตรวจสอบไม่ให้ไอเทมซ้ำตอนเปลี่ยนสเตทหน้าจอ
       setProjectors((prevData) => {
-        const isExist = prevData.some(item => item.name === newProduct.name && item.price === newProduct.price);
+        const isExist = prevData.some(item => item.name === newProduct.name);
         if (isExist) return prevData;
-        return [newProduct, ...prevData]; // เอาสินค้าชิ้นใหม่ไว้บนสุด
+        return [newProduct, ...prevData]; // เอาตัวใหม่ล่าสุดโชว์บนสุด
       });
     }
-  }, [newProductName, newProductBrand, newProductPrice, newProductStock]);
+  }, [newProductName, newProductBrand, newProductPrice, newProductStock, newProductImage]);
+
+  // ฟังก์ชันสำหรับกดลบสินค้า (หนูสามารถกดลบตัวที่ไม่ต้องการออกได้เลยค่ะ)
+  const handleDelete = (id: string) => {
+    setProjectors(projectors.filter(item => item.id !== id));
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ส่วนหัวหน้าจอ */}
+      {/* Header สไตล์ VANTA มืดหรู */}
       <View style={styles.header}>
-        {/* ปรับให้ปุ่มย้อนกลับวิ่งไปที่หน้า Dashboard เพื่อความเสถียรของแอป */}
         <TouchableOpacity onPress={() => router.push('/dashboard')}>
-          <Ionicons name="arrow-back" size={24} color="#1E1B4B" />
+          <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>คลังสินค้าโปรเจคเตอร์</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={() => router.push('/add-product')}>
+          <Ionicons name="add-circle-outline" size={26} color="#FFF" />
+        </TouchableOpacity>
       </View>
 
       {/* รายการสินค้า */}
@@ -67,14 +69,21 @@ export default function StockScreen() {
         data={projectors}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
-            <View>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemPrice}>ราคา: {item.price}</Text>
+            <View style={styles.leftContent}>
+              {/* 📸 เพิ่มการแสดงผลรูปภาพโปรเจคเตอร์ */}
+              <Image source={{ uri: item.image }} style={styles.productImage} />
+              
+              <View style={styles.infoContainer}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.itemPrice}>ราคา: {item.price}</Text>
+                <Text style={styles.itemStock}>คงเหลือ: {item.stock} เครื่อง</Text>
+              </View>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.itemStock}>คงเหลือ: {item.stock} เครื่อง</Text>
+
+            <View style={styles.rightContent}>
               <Text style={[
                 styles.statusTag, 
                 { 
@@ -84,6 +93,11 @@ export default function StockScreen() {
               ]}>
                 {item.status}
               </Text>
+              
+              {/* ปุ่มลบสินค้าสำหรับจัดการข้อมูลที่กรอกผิด */}
+              <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
+                <Ionicons name="trash-outline" size={16} color="#EF4444" />
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -93,53 +107,17 @@ export default function StockScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F3F4F6', 
-    paddingHorizontal: 20 
-  },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginVertical: 20 
-  },
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: 'bold', 
-    color: '#1E1B4B' 
-  },
-  itemCard: { 
-    backgroundColor: '#fff', 
-    padding: 16, 
-    borderRadius: 12, 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 10 
-  },
-  itemName: { 
-    fontSize: 16, 
-    fontWeight: 'bold', 
-    color: '#1E1B4B' 
-  },
-  itemPrice: { 
-    fontSize: 14, 
-    color: '#6B7280', 
-    marginTop: 4 
-  },
-  itemStock: { 
-    fontSize: 14, 
-    color: '#1E1B4B', 
-    fontWeight: '500' 
-  },
-  statusTag: { 
-    fontSize: 10, 
-    fontWeight: 'bold', 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    borderRadius: 6, 
-    marginTop: 6, 
-    overflow: 'hidden' 
-  }
+  container: { flex: 1, backgroundColor: '#F3F4F6' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1A1A1A', paddingHorizontal: 20, paddingVertical: 15 },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
+  itemCard: { backgroundColor: '#fff', padding: 14, borderRadius: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 15, marginTop: 12, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
+  leftContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  productImage: { width: 70, height: 70, borderRadius: 10, backgroundColor: '#E5E7EB', marginRight: 12 },
+  infoContainer: { flex: 1 },
+  itemName: { fontSize: 15, fontWeight: 'bold', color: '#1E1B4B' },
+  itemPrice: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  itemStock: { fontSize: 13, color: '#1E1B4B', fontWeight: '500', marginTop: 2 },
+  rightContent: { alignItems: 'flex-end', justifyContent: 'space-between', height: 70 },
+  statusTag: { fontSize: 10, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, overflow: 'hidden' },
+  deleteBtn: { padding: 4, marginTop: 10 }
 });
