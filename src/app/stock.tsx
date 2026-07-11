@@ -13,7 +13,6 @@ export default function StockScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   
-  // 🛠️ แก้ไข: ดักรับตัวแปรทุกชื่อที่เป็นไปได้ (ป้องกันการตั้งชื่อไม่ตรงกันในหน้า Add)
   const { 
     newProductName, productName, name,
     newProductBrand, productBrand, brand,
@@ -30,13 +29,10 @@ export default function StockScreen() {
         const savedData = await AsyncStorage.getItem('@projector_products');
         let currentList = savedData !== null ? JSON.parse(savedData) : INITIAL_PROJECTOR_DATA;
 
-        // ดึงค่าจริงจากตัวแปรที่ดักไว้
         const finalName = newProductName || productName || name;
         const finalPrice = newProductPrice || productPrice || price;
         const finalBrand = newProductBrand || productBrand || brand;
         const finalStock = newProductStock || productStock || stock;
-        
-        // 📸 เลือกตัวแปรที่มีข้อมูลรูปภาพอยู่จริง
         const finalImage = newProductImage || productImage || imageUri || image;
 
         if (finalName && finalPrice) {
@@ -54,14 +50,12 @@ export default function StockScreen() {
             price: `${Number(finalPrice).toLocaleString()} บ.`,
             stock: stockNum,
             status: calculatedStatus,
-            // ถ้ารูปมีให้ส่งค่ารูปไป ถ้าไม่มีให้ดึงภาพพื้นหลังดีฟอลต์มาโชว์
             image: (finalImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
           };
 
           currentList = [newProduct, ...currentList];
           await AsyncStorage.setItem('@projector_products', JSON.stringify(currentList));
           
-          // เคลียร์ค่าหลังจากแอดเสร็จ
           router.setParams({ 
             newProductName: '', productName: '', name: '',
             newProductPrice: '', productPrice: '', price: '' 
@@ -101,9 +95,20 @@ export default function StockScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
-          <View style={styles.itemCard}>
+          /* 🛠️ เพิ่มคำสั่ง onPress ตรงนี้: กดปุ๊บ วิ่งไปหน้ารายละเอียดพร้อมส่งค่าข้อมูลไปด้วยทันที */
+          <TouchableOpacity 
+            style={styles.itemCard}
+            onPress={() => router.push({
+              pathname: '/product-detail', // จิ้มแล้วจะเปิดหน้า product-detail.tsx สไตล์ของเพื่อน
+              params: { 
+                name: item.name, 
+                price: item.price, 
+                stock: item.stock, 
+                image: item.image 
+              }
+            })}
+          >
             <View style={styles.leftContent}>
-              {/* 📸 แสดงรูปภาพ ตรวจสอบเงื่อนไขรูป */}
               <Image 
                 source={{ uri: item.image }} 
                 style={styles.productImage} 
@@ -127,11 +132,12 @@ export default function StockScreen() {
                 {item.status}
               </Text>
               
+              {/* ปุ่มลบสินค้าคงไว้เหมือนเดิมเพื่อจัดการข้อมูล */}
               <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
                 <Ionicons name="trash-outline" size={16} color="#EF4444" />
               </TouchableOpacity>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       />
     </SafeAreaView>
