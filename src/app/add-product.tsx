@@ -32,7 +32,7 @@ export default function AddProductScreen() {
     }
   };
 
-  // 🛠️ แก้ไขฟังก์ชันการเซฟสินค้าให้ส่งข้อมูลข้ามหน้าไปยังหน้าคลังสินค้า (stock)
+  // 🛠️ แก้ไขฟังก์ชันการเซฟสินค้าใหม่ (ส่งค่าผ่าน URL แบบชัวร์ 100%)
   const handleSave = () => {
     if (!name || !brand || !price || !stock) {
       Alert.alert("Error", "Please fill in all fields (including Price and Stock)");
@@ -43,17 +43,15 @@ export default function AddProductScreen() {
       {
         text: "OK",
         onPress: () => {
-          // ใช้ router.push ส่งค่าตัวแปรทั้งหมดพ่วงเป็น Query Parameters ไปที่หน้า /stock
-          router.push({
-            pathname: '/stock',
-            params: {
-              newProductName: name,
-              newProductBrand: brand,
-              newProductPrice: price,
-              newProductStock: stock,
-              newProductImage: imageUri || '', // ส่งลิ้งก์รูปภาพไปด้วย (ถ้ามี)
-            }
-          });
+          // เข้ารหัสข้อมูลให้ปลอดภัยสำหรับพ่วงท้ายลิงก์ (ป้องกันสระ/เว้นวรรคแล้วลิงก์พัง)
+          const queryName = encodeURIComponent(name);
+          const queryBrand = encodeURIComponent(brand);
+          const queryPrice = encodeURIComponent(price);
+          const queryStock = encodeURIComponent(stock);
+          const queryImage = encodeURIComponent(imageUri || '');
+
+          // ยิงลิงก์ตรงพาข้อมูลข้ามหน้าไปหาหน้า /stock ทันที
+          router.push(`/stock?newProductName=${queryName}&newProductBrand=${queryBrand}&newProductPrice=${queryPrice}&newProductStock=${queryStock}&newProductImage=${queryImage}`);
         }
       }
     ]);
