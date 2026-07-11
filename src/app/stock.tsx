@@ -12,21 +12,35 @@ const INITIAL_PROJECTOR_DATA = [
 export default function StockScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { newProductName, newProductBrand, newProductPrice, newProductStock, newProductImage } = params;
+  
+  // 🛠️ แก้ไข: ดักรับตัวแปรทุกชื่อที่เป็นไปได้ (ป้องกันการตั้งชื่อไม่ตรงกันในหน้า Add)
+  const { 
+    newProductName, productName, name,
+    newProductBrand, productBrand, brand,
+    newProductPrice, productPrice, price,
+    newProductStock, productStock, stock,
+    newProductImage, productImage, imageUri, image 
+  } = params;
 
   const [projectors, setProjectors] = useState<any[]>([]);
 
-  // 1. ฟังก์ชันโหลดข้อมูลและจัดการแอดตัวใหม่ (รวบมาทำงานร่วมกันเพื่อความเสถียร ชิ้นที่สองจะได้ไม่หาย)
   useEffect(() => {
     const handleSyncData = async () => {
       try {
-        // ดึงข้อมูลเก่าที่เซฟไว้ในเครื่องขึ้นมาก่อน
         const savedData = await AsyncStorage.getItem('@projector_products');
         let currentList = savedData !== null ? JSON.parse(savedData) : INITIAL_PROJECTOR_DATA;
 
-        // ถ้ามีข้อมูลชิ้นใหม่ส่งมาจากหน้า Add Product
-        if (newProductName && newProductPrice) {
-          const stockNum = parseInt(newProductStock as string, 10) || 0;
+        // ดึงค่าจริงจากตัวแปรที่ดักไว้
+        const finalName = newProductName || productName || name;
+        const finalPrice = newProductPrice || productPrice || price;
+        const finalBrand = newProductBrand || productBrand || brand;
+        const finalStock = newProductStock || productStock || stock;
+        
+        // 📸 เลือกตัวแปรที่มีข้อมูลรูปภาพอยู่จริง
+        const finalImage = newProductImage || productImage || imageUri || image;
+
+        if (finalName && finalPrice) {
+          const stockNum = parseInt(finalStock as string, 10) || 0;
           let calculatedStatus = 'มีสินค้า';
           if (stockNum === 0) {
             calculatedStatus = 'สินค้าหมด';
@@ -35,20 +49,23 @@ export default function StockScreen() {
           }
 
           const newProduct = {
-            id: Date.now().toString(), // ใช้เวลาปัจจุบันทำ ID ชิ้นที่สองจะไม่มีทางซ้ำ
-            name: `${newProductBrand ? newProductBrand + ' ' : ''}${newProductName}`,
-            price: `${Number(newProductPrice).toLocaleString()} บ.`,
+            id: Date.now().toString(),
+            name: `${finalBrand ? finalBrand + ' ' : ''}${finalName}`,
+            price: `${Number(finalPrice).toLocaleString()} บ.`,
             stock: stockNum,
             status: calculatedStatus,
-            image: (newProductImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
+            // ถ้ารูปมีให้ส่งค่ารูปไป ถ้าไม่มีให้ดึงภาพพื้นหลังดีฟอลต์มาโชว์
+            image: (finalImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
           };
 
-          // 🛠️ แก้ไขตรงนี้: ปลดล็อกระบบเช็คชื่อซ้ำออกแล้ว เพื่อให้เพิ่มชิ้นต่อ ๆ ไปได้ตลอดเวลา
           currentList = [newProduct, ...currentList];
           await AsyncStorage.setItem('@projector_products', JSON.stringify(currentList));
           
-          // ล้างเคลียร์ params ทิ้งเพื่อไม่ให้มันแอดซ้ำตอนรีเฟรชหน้าจอ
-          router.setParams({ newProductName: '', newProductPrice: '' });
+          // เคลียร์ค่าหลังจากแอดเสร็จ
+          router.setParams({ 
+            newProductName: '', productName: '', name: '',
+            newProductPrice: '', productPrice: '', price: '' 
+          });
         }
 
         setProjectors(currentList);
@@ -58,9 +75,8 @@ export default function StockScreen() {
     };
 
     handleSyncData();
-  }, [newProductName, newProductPrice]);
+  }, [newProductName, productName, name, newProductPrice, productPrice, price]);
 
-  // 2. ฟังก์ชันกดลบสินค้า
   const handleDelete = async (id: string) => {
     const updatedData = projectors.filter(item => item.id !== id);
     setProjectors(updatedData);
@@ -69,7 +85,6 @@ export default function StockScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header สไตล์ VANTA มืดหรู */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/dashboard')}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -80,7 +95,6 @@ export default function StockScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* รายการสินค้า */}
       <FlatList
         data={projectors}
         keyExtractor={(item) => item.id}
@@ -89,7 +103,12 @@ export default function StockScreen() {
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
             <View style={styles.leftContent}>
-              <Image source={{ uri: item.image }} style={styles.productImage} />
+              {/* 📸 แสดงรูปภาพ ตรวจสอบเงื่อนไขรูป */}
+              <Image 
+                source={{ uri: item.image }} 
+                style={styles.productImage} 
+                resizeMode="cover"
+              />
               <View style={styles.infoContainer}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemPrice}>ราคา: {item.price}</Text>
@@ -125,12 +144,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
   itemCard: { backgroundColor: '#fff', padding: 14, borderRadius: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 15, marginTop: 12, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
   leftContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  productImage: { width: 70, height: 70, borderRadius: 10, backgroundColor: '#E5E7EB', marginRight: 12 },
+  productImage: { width: 75, height: 75, borderRadius: 10, backgroundColor: '#E5E7EB', marginRight: 12 },
   infoContainer: { flex: 1 },
   itemName: { fontSize: 15, fontWeight: 'bold', color: '#1E1B4B' },
   itemPrice: { fontSize: 13, color: '#6B7280', marginTop: 2 },
   itemStock: { fontSize: 13, color: '#1E1B4B', fontWeight: '500', marginTop: 2 },
-  rightContent: { alignItems: 'flex-end', justifyContent: 'space-between', height: 70 },
+  rightContent: { alignItems: 'flex-end', justifyContent: 'space-between', height: 75 },
   statusTag: { fontSize: 10, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, overflow: 'hidden' },
   deleteBtn: { padding: 4, marginTop: 10 }
 });
