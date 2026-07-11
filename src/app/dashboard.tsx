@@ -37,21 +37,70 @@ export default function DashboardScreen() {
 <Text style={styles.sidebarIcon}>➕</Text>
 <Text style={styles.sidebarText}>Add Product</Text>
 </TouchableOpacity>
-<TouchableOpacity style={styles.sidebarItem} onPress={() => { toggleMenu(); router.push('/products'); }}>
-<Text style={styles.sidebarIcon}>📦</Text>
-<Text style={styles.sidebarText}>Products List</Text>
-</TouchableOpacity>
-<TouchableOpacity style={styles.sidebarItem} onPress={() => { toggleMenu(); router.push('/categories'); }}>
-<Text style={styles.sidebarIcon}>🧬</Text>
-<Text style={styles.sidebarText}>Categories Summary</Text>
-</TouchableOpacity>
-<TouchableOpacity style={styles.sidebarItem} onPress={() => { toggleMenu(); router.push('/settings'); }}>
-<Text style={styles.sidebarIcon}>⚙️</Text>
-<Text style={styles.sidebarText}>Personal Settings</Text>
-</TouchableOpacity>
+<View style={styles.sidebarMenu}>
+
+  <TouchableOpacity
+    style={[styles.sidebarItem, styles.sidebarItemActive]}
+    onPress={toggleMenu}
+  >
+    <Text style={styles.sidebarIcon}>🏠</Text>
+    <Text style={styles.sidebarTextActive}>Home Dashboard</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.sidebarItem}
+    onPress={() => {
+      toggleMenu();
+      router.push('/add-product');
+    }}
+  >
+    <Text style={styles.sidebarIcon}>➕</Text>
+    <Text style={styles.sidebarText}>Add Product</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.sidebarItem}
+    onPress={() => {
+      toggleMenu();
+      router.push('/stock');
+    }}
+  >
+    <Text style={styles.sidebarIcon}>📦</Text>
+    <Text style={styles.sidebarText}>Products List</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.sidebarItem}
+    onPress={() => {
+      toggleMenu();
+      router.push('/dashboard');
+    }}
+  >
+    <Text style={styles.sidebarIcon}>🧬</Text>
+    <Text style={styles.sidebarText}>Categories Summary</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.sidebarItem}
+    onPress={() => {
+      toggleMenu();
+      router.push('/login');
+    }}
+  >
+    <Text style={styles.sidebarIcon}>⚙️</Text>
+    <Text style={styles.sidebarText}>Personal Settings</Text>
+  </TouchableOpacity>
+
 </View>
-<TouchableOpacity style={styles.logoutButton} onPress={() => { toggleMenu(); router.push('/login'); }}>
-<Text style={styles.logoutText}>Log out</Text>
+
+<TouchableOpacity
+  style={styles.logoutButton}
+  onPress={() => {
+    toggleMenu();
+    router.push('/login');
+  }}
+>
+  <Text style={styles.logoutText}>Log out</Text>
 </TouchableOpacity>
 </Animated.View>
      {/* ฉากหลังสีดำโปร่งแสงเมื่อเมนูเปิดออกมา เพื่อให้กดปิดเมนูได้ง่าย */}
@@ -67,7 +116,7 @@ export default function DashboardScreen() {
 <Ionicons name="menu" size={26} color="#FFF" />
 </TouchableOpacity>
 <Text style={styles.headerTitle}>VANTA</Text>
-<TouchableOpacity style={styles.avatar} onPress={() => router.push('/settings')}>
+<TouchableOpacity style={styles.avatar} onPress={() => router.push('/login')}>
 <Text style={styles.avatarText}>V</Text>
 </TouchableOpacity>
 </View>
@@ -100,7 +149,7 @@ export default function DashboardScreen() {
 <Text style={styles.statSub}>Qty</Text>
 <Text style={styles.statLabel}>GROUPS</Text>
 </View>
-<TouchableOpacity style={[styles.statCard, styles.viewMoreCard]} onPress={() => router.push('/activities')}>
+<TouchableOpacity style={[styles.statCard, styles.viewMoreCard]} onPress={() => router.push('/dashboard')}>
 <Ionicons name="arrow-forward-box" size={24} color="#FFF" style={styles.viewMoreIcon} />
 <Text style={styles.viewMoreText}>VIEW MORE</Text>
 </TouchableOpacity>
@@ -141,12 +190,12 @@ export default function DashboardScreen() {
 <Text style={styles.navText}>Add</Text>
 </TouchableOpacity>
        {/* ปุ่ม Products สำหรับย้ายไปหน้ารายการสินค้า */}
-<TouchableOpacity style={styles.navItem} onPress={() => router.push('/products')}>
+<TouchableOpacity style={styles.navItem} onPress={() => router.push('/stock')}>
 <MaterialCommunityIcons name="cube-outline" size={22} color="#9CA3AF" />
 <Text style={styles.navText}>Products</Text>
 </TouchableOpacity>
        {/* ปุ่ม Categories สำหรับย้ายไปหน้าหมวดหมู่ */}
-<TouchableOpacity style={styles.navItem} onPress={() => router.push('/categories')}>
+<TouchableOpacity style={styles.navItem} onPress={() => router.push('/dashboard')}>
 <Ionicons name="git-network-outline" size={22} color="#9CA3AF" />
 <Text style={styles.navText}>Categories</Text>
 </TouchableOpacity>
