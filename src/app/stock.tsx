@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'Epson EB-X06', price: '14,500 บ.', stock: 5, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
-  { id: '2', name: 'BenQ TH585P', price: '21,900 บ.', stock: 2, status: 'สต็อกน้อย', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
+  { id: '1', name: 'WANDO X2 Max Smart Android Projector', price: '5,990 บ.', stock: 15, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
+  { id: '2', name: 'WANDO Mini Projector', price: '3,502 บ.', stock: 10, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
 ];
 
 export default function StockScreen() {
@@ -33,7 +33,14 @@ export default function StockScreen() {
         const finalPrice = newProductPrice || productPrice || price;
         const finalBrand = newProductBrand || productBrand || brand;
         const finalStock = newProductStock || productStock || stock;
-        const finalImage = newProductImage || productImage || imageUri || image;
+        
+        // ตรวจสอบตัวแปรภาพอย่างเข้มงวด
+        let finalImage = newProductImage || productImage || imageUri || image;
+        let validImageUri = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400';
+        
+        if (finalImage && typeof finalImage === 'string' && finalImage.trim() !== '') {
+          validImageUri = finalImage;
+        }
 
         if (finalName && finalPrice) {
           const stockNum = parseInt(finalStock as string, 10) || 0;
@@ -50,7 +57,7 @@ export default function StockScreen() {
             price: `${Number(finalPrice).toLocaleString()} บ.`,
             stock: stockNum,
             status: calculatedStatus,
-            image: (finalImage as string) || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
+            image: validImageUri
           };
 
           currentList = [newProduct, ...currentList];
@@ -58,11 +65,18 @@ export default function StockScreen() {
           
           router.setParams({ 
             newProductName: '', productName: '', name: '',
-            newProductPrice: '', productPrice: '', price: '' 
+            newProductPrice: '', productPrice: '', price: '',
+            newProductImage: '', productImage: '', imageUri: '', image: ''
           });
         }
 
-        setProjectors(currentList);
+        // เช็คความสมบูรณ์ของภาพทุกรูปในลิสต์ก่อนนำไปโชว์
+        const verifiedList = currentList.map((item: any) => ({
+          ...item,
+          image: item.image && typeof item.image === 'string' ? item.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
+        }));
+
+        setProjectors(verifiedList);
       } catch (e) {
         console.log(e);
       }
@@ -95,11 +109,10 @@ export default function StockScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
-          /* 🛠️ เพิ่มคำสั่ง onPress ตรงนี้: กดปุ๊บ วิ่งไปหน้ารายละเอียดพร้อมส่งค่าข้อมูลไปด้วยทันที */
           <TouchableOpacity 
             style={styles.itemCard}
             onPress={() => router.push({
-              pathname: '/product-detail', // จิ้มแล้วจะเปิดหน้า product-detail.tsx สไตล์ของเพื่อน
+              pathname: '/product-detail',
               params: { 
                 name: item.name, 
                 price: item.price, 
@@ -132,7 +145,6 @@ export default function StockScreen() {
                 {item.status}
               </Text>
               
-              {/* ปุ่มลบสินค้าคงไว้เหมือนเดิมเพื่อจัดการข้อมูล */}
               <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
                 <Ionicons name="trash-outline" size={16} color="#EF4444" />
               </TouchableOpacity>
