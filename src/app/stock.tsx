@@ -1,14 +1,14 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400&auto=format&fit=crop';
 
-const STORAGE_KEY = '@lumen_products';
-const LEGACY_STORAGE_KEY = '@vanta_products';
+const STORAGE_KEY = '@vanta_products';
+const LEGACY_STORAGE_KEY = '@lumen_products';
 
 const INITIAL_PROJECTOR_DATA = [
   {
@@ -50,6 +50,10 @@ const INITIAL_PROJECTOR_DATA = [
 
 function ProductThumbnail({ uri }: { uri: string }) {
   const [src, setSrc] = useState(uri || FALLBACK_IMAGE);
+
+  useEffect(() => {
+    setSrc(uri && uri.trim() !== '' ? uri : FALLBACK_IMAGE);
+  }, [uri]);
 
   return (
     <Image
@@ -137,6 +141,7 @@ export default function StockScreen() {
           return (
             <TouchableOpacity
               style={styles.itemCard}
+              activeOpacity={0.85}
               onPress={() =>
                 router.push({
                   pathname: '/product-detail',
@@ -196,7 +201,10 @@ export default function StockScreen() {
                     <Ionicons name="settings-outline" size={14} color="#38BDF8" />
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={() => handleDelete(item.id)}
+                  >
                     <Ionicons name="trash-outline" size={14} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
