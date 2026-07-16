@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-// โครงสร้างข้อมูลตั้งต้นของสินค้าชิ้นหลัก (เหมือนกับหน้า stock เพื่อความเสถียร)
+// ข้อมูลตั้งต้น
 const INITIAL_PROJECTOR_DATA = [
   { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: '5990', stock: '15', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
   { id: '2', name: 'WANBO Mini Projector', price: '3502', stock: '10', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
@@ -16,15 +16,13 @@ const INITIAL_PROJECTOR_DATA = [
 export default function AddProductScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const editId = params.editId as string | undefined; // รับ id จากปุ่มเฟือง
+  const editId = params.editId as string | undefined;
 
-  // States สำหรับเก็บค่าใน Input ฟอร์ม
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
-  // โหลดข้อมูลเก่ามาใส่ฟอร์มกรณีที่เป็นการ "แก้ไขสินค้า" (Edit Mode)
   useEffect(() => {
     if (editId) {
       loadProductForEdit();
@@ -39,8 +37,17 @@ export default function AddProductScreen() {
       const targetItem = products.find((item: any) => item.id === editId);
       if (targetItem) {
         setName(targetItem.name);
-        setPrice(targetItem.price.toString());
-        setStock(targetItem.stock.toString());
+        
+        // 🛠️ คลีนข้อมูลราคา เอาอักษร "บ.", เครื่องหมายจุลภาค (,) และเว้นวรรคออก ให้เหลือแต่ตัวเลข
+        let cleanedPrice = targetItem.price.toString()
+          .replace(/[^\d.]/g, ''); // ดึงเฉพาะตัวเลขและจุดทศนิยม
+        setPrice(cleanedPrice);
+
+        // คลีนข้อมูลสต็อกสินค้า ให้เหลือแต่ตัวเลขเช่นกัน
+        let cleanedStock = targetItem.stock.toString()
+          .replace(/[^\d]/g, ''); // ดึงเฉพาะตัวเลขจำนวนเต็ม
+        setStock(cleanedStock);
+
         setImageUrl(targetItem.image || '');
       }
     } catch (error) {
@@ -48,43 +55,55 @@ export default function AddProductScreen() {
     }
   };
 
-  // Function บันทึกข้อมูล (รองรับทั้งเพิ่มใหม่ และแก้ไขตัวเก่า)
   const handleSaveProduct = async () => {
     if (!name.trim() || !price.trim() || !stock.trim()) {
       Alert.alert('System Alert', 'Please complete all required core parameters.');
       return;
     }
 
+    // สกัดเอาเฉพาะตัวเลขจริงๆ ป้องกันการส่งค่าตัวอักษรแปลกๆ ไปเซฟแล้วทำแอปพัง
+    const finalPrice = price.replace(/[^\d.]/g, '');
+    const finalStock = stock.replace(/[^\d]/g, '');
+
     try {
       const storedData = await AsyncStorage.getItem('@vanta_products');
       let products = storedData ? JSON.parse(storedData) : [...INITIAL_PROJECTOR_DATA];
 
+      // จัดการลิงก์รูปภาพ: ป้องกันกรณีใช้ blob url หรือลิงก์ที่พัง
+      let finalImgUrl = imageUrl.trim();
+      if (finalImgUrl.startsWith('blob:')) {
+        Alert.alert(
+          'Invalid Image URL', 
+          'Blob URLs cannot be loaded. We restored the default image placeholder.'
+        );
+        finalImgUrl = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop';
+      }
+
       if (editId) {
-        // 🔄 LOGIC แก้ไข: อัปเดตทับข้อมูลตัวเดิมใน Array
+        // อัปเดตข้อมูลสินค้าเดิม
         products = products.map((item: any) => 
           item.id === editId 
-            ? { ...item, name, price, stock, image: imageUrl.trim() } 
+            ? { ...item, name, price: finalPrice, stock: finalStock, image: finalImgUrl } 
             : item
         );
       } else {
-        // ➕ LOGIC เพิ่มใหม่: สร้าง Object ชิ้นใหม่ต่อท้าย
+        // เพิ่มสินค้าใหม่
         const newProduct = {
           id: Date.now().toString(),
           name,
-          price,
-          stock,
-          image: imageUrl.trim(),
+          price: finalPrice,
+          stock: finalStock,
+          image: finalImgUrl || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop',
         };
         products.push(newProduct);
       }
 
-      // บันทึกลงหน่วยความจำถาวรเครื่อง
       await AsyncStorage.setItem('@vanta_products', JSON.stringify(products));
       
       Alert.alert(
         'Success', 
         editId ? 'Terminal configuration updated successfully.' : 'New hardware terminal registered.',
-        [{ text: 'OK', onPress: () => router.push('/stock') }]
+        [{ text: 'OK', onPress: () => router.replace('/stock') }]
       );
     } catch (error) {
       Alert.alert('Error', 'Failed to save configuration matrix data.');
@@ -93,7 +112,6 @@ export default function AddProductScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ⚡ Header สไตล์ LUMEN.OS */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.navBtn}>
           <Ionicons name="chevron-back" size={22} color="#6366F1" />
@@ -140,21 +158,24 @@ export default function AddProductScreen() {
             onChangeText={setStock}
           />
 
-          {/* 🖼️ Input 4: ฟิลด์เปลี่ยนรูปภาพสินค้าด้วย Web URL */}
+          {/* Input 4: URL รูปภาพ */}
           <Text style={styles.inputLabel}>PRODUCT IMAGE URL</Text>
           <TextInput
             style={[styles.inputField, styles.urlInput]}
-            placeholder="Paste web link here (e.g., https://...)"
+            placeholder="Paste public web link (https://...)"
             placeholderTextColor="#4B5563"
             autoCapitalize="none"
             autoCorrect={false}
             value={imageUrl}
             onChangeText={setImageUrl}
           />
-          <Text style={styles.inputHint}>* Paste image URL web link (.jpg, .png) to change the thumbnail appearance.</Text>
+          <Text style={styles.inputHint}>
+            * ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// เท่านั้น (ห้ามใช้ blob:) เช่น: 
+            {"\n"}https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400
+          </Text>
         </View>
 
-        {/* ปุ่ม Submit หลัก */}
+        {/* ปุ่ม Submit บันทึกข้อมูล */}
         <TouchableOpacity style={styles.submitBtn} onPress={handleSaveProduct}>
           <Ionicons name={editId ? "save-outline" : "add-circle-outline"} size={20} color="#FFF" style={{ marginRight: 8 }} />
           <Text style={styles.submitBtnText}>
@@ -163,7 +184,7 @@ export default function AddProductScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* 🗺️ Bottom Navigation */}
+      {/* Navigation */}
       <View style={styles.navBar}>
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="grid-outline" size={20} color="#9CA3AF" />
@@ -189,27 +210,19 @@ export default function AddProductScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0B0F19' },
   scrollContainer: { padding: 20, paddingBottom: 120 },
-  
-  // Header Style
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111827', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#1F2937' },
   headerTitle: { fontSize: 13, fontWeight: '900', color: '#FFF', letterSpacing: 2 },
   navBtn: { backgroundColor: '#1E293B', padding: 8, borderRadius: 10 },
   avatar: { backgroundColor: '#6366F1', width: 35, height: 35, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 12 },
-  
-  // Content Layout
   sectionTitle: { fontSize: 10, fontWeight: '800', color: '#6366F1', marginTop: 10, marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1.5 },
   formCard: { backgroundColor: '#151F32', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#1E293B' },
   inputLabel: { fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 8, letterSpacing: 0.5 },
   inputField: { backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: '#FFF', fontSize: 14, marginBottom: 20, borderWidth: 1, borderColor: '#2D3748', fontWeight: '500' },
-  urlInput: { fontFamily: 'Platform' === 'ios' ? 'Courier' : 'sans-serif-light', fontSize: 12 },
-  inputHint: { fontSize: 10, color: '#6B7280', marginTop: -12, marginBottom: 10, fontWeight: '500' },
-
-  // Submit Action Button
+  urlInput: { fontSize: 12 },
+  inputHint: { fontSize: 11, color: '#A0AEC0', marginTop: -12, marginBottom: 10, lineHeight: 16, fontWeight: '500' },
   submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#6366F1', paddingVertical: 16, borderRadius: 14, marginTop: 24, shadowColor: '#6366F1', shadowOpacity: 0.2, shadowRadius: 10, elevation: 3 },
   submitBtnText: { color: '#FFF', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
-
-  // Bottom Navigation NavBar
   navBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, backgroundColor: '#111827', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#1F2937', zIndex: 10 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   navText: { fontSize: 10, color: '#9CA3AF', marginTop: 4, fontWeight: '600' }
