@@ -1,17 +1,8 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-// ข้อมูลตั้งต้น
-const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: '5990', stock: '15', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
-  { id: '2', name: 'WANBO Mini Projector', price: '3502', stock: '10', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
-  { id: '3', name: 'WANBO Projector Android 9.0 / Mozart', price: '17590', stock: '15', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
-  { id: '4', name: 'ACER Projector x 1328wi', price: '17390', stock: '15', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
-  { id: '5', name: 'Epson Projector / EB-E24', price: '17790', stock: '25', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
-];
 
 export default function AddProductScreen() {
   const router = useRouter();
@@ -31,82 +22,75 @@ export default function AddProductScreen() {
 
   const loadProductForEdit = async () => {
     try {
-      const storedData = await AsyncStorage.getItem('@vanta_products');
-      let products = storedData ? JSON.parse(storedData) : INITIAL_PROJECTOR_DATA;
-      
-      const targetItem = products.find((item: any) => item.id === editId);
-      if (targetItem) {
-        setName(targetItem.name);
-        
-        // 🛠️ คลีนข้อมูลราคา เอาอักษร "บ.", เครื่องหมายจุลภาค (,) และเว้นวรรคออก ให้เหลือแต่ตัวเลข
-        let cleanedPrice = targetItem.price.toString()
-          .replace(/[^\d.]/g, ''); // ดึงเฉพาะตัวเลขและจุดทศนิยม
-        setPrice(cleanedPrice);
-
-        // คลีนข้อมูลสต็อกสินค้า ให้เหลือแต่ตัวเลขเช่นกัน
-        let cleanedStock = targetItem.stock.toString()
-          .replace(/[^\d]/g, ''); // ดึงเฉพาะตัวเลขจำนวนเต็ม
-        setStock(cleanedStock);
-
-        setImageUrl(targetItem.image || '');
+      const storedData = await AsyncStorage.getItem('@lumen_products');
+      if (storedData) {
+        const products = JSON.parse(storedData);
+        const item = products.find((p: any) => p.id === editId);
+        if (item) {
+          setName(item.name);
+          // เอาอักษรที่ไม่ใช่ตัวเลขออกทั้งหมด ก่อนเอามาแสดงใน Input แก้ไข
+          setPrice(item.price.toString().replace(/[^\d]/g, ''));
+          setStock(item.stock.toString().replace(/[^\d]/g, ''));
+          setImageUrl(item.image || '');
+        }
       }
     } catch (error) {
-      console.error('Failed to load product for editing', error);
+      console.error(error);
     }
   };
 
-  const handleSaveProduct = async () => {
+  const handleSave = async () => {
     if (!name.trim() || !price.trim() || !stock.trim()) {
-      Alert.alert('System Alert', 'Please complete all required core parameters.');
+      Alert.alert('Missing Info', 'Please fill in all core configurations.');
       return;
     }
 
-    // สกัดเอาเฉพาะตัวเลขจริงๆ ป้องกันการส่งค่าตัวอักษรแปลกๆ ไปเซฟแล้วทำแอปพัง
-    const finalPrice = price.replace(/[^\d.]/g, '');
-    const finalStock = stock.replace(/[^\d]/g, '');
-
     try {
-      const storedData = await AsyncStorage.getItem('@vanta_products');
-      let products = storedData ? JSON.parse(storedData) : [...INITIAL_PROJECTOR_DATA];
+      const storedData = await AsyncStorage.getItem('@lumen_products');
+      let products = storedData ? JSON.parse(storedData) : [];
 
-      // จัดการลิงก์รูปภาพ: ป้องกันกรณีใช้ blob url หรือลิงก์ที่พัง
-      let finalImgUrl = imageUrl.trim();
-      if (finalImgUrl.startsWith('blob:')) {
-        Alert.alert(
-          'Invalid Image URL', 
-          'Blob URLs cannot be loaded. We restored the default image placeholder.'
-        );
-        finalImgUrl = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop';
+      // ดึงเฉพาะตัวเลขบริสุทธิ์เพื่อจัดเก็บลง Storage
+      const cleanPrice = price.replace(/[^\d]/g, '');
+      const cleanStock = stock.replace(/[^\d]/g, '');
+
+      // ป้องกันเรื่อง blob url ค้างในระบบ
+      let finalImg = imageUrl.trim();
+      if (finalImg.startsWith('blob:')) {
+        finalImg = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop';
       }
 
       if (editId) {
-        // อัปเดตข้อมูลสินค้าเดิม
-        products = products.map((item: any) => 
-          item.id === editId 
-            ? { ...item, name, price: finalPrice, stock: finalStock, image: finalImgUrl } 
-            : item
+        // ทำการอัปเดตตัวเก่า
+        products = products.map((p: any) => 
+          p.id === editId 
+            ? { ...p, name, price: cleanPrice, stock: cleanStock, image: finalImg } 
+            : p
         );
       } else {
-        // เพิ่มสินค้าใหม่
-        const newProduct = {
+        // เพิ่มตัวใหม่
+        const newProd = {
           id: Date.now().toString(),
           name,
-          price: finalPrice,
-          stock: finalStock,
-          image: finalImgUrl || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop',
+          price: cleanPrice,
+          stock: cleanStock,
+          image: finalImg || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop'
         };
-        products.push(newProduct);
+        products.push(newProd);
       }
 
-      await AsyncStorage.setItem('@vanta_products', JSON.stringify(products));
+      await AsyncStorage.setItem('@lumen_products', JSON.stringify(products));
       
-      Alert.alert(
-        'Success', 
-        editId ? 'Terminal configuration updated successfully.' : 'New hardware terminal registered.',
-        [{ text: 'OK', onPress: () => router.replace('/stock') }]
-      );
+      Alert.alert('Successful', 'Matrix array database has been updated.', [
+        { 
+          text: 'OK', 
+          onPress: () => {
+            // บังคับเปลี่ยนหน้าและล้าง stack เพื่อให้หน้า stock โหลดใหม่ทันที
+            router.replace('/stock');
+          } 
+        }
+      ]);
     } catch (error) {
-      Alert.alert('Error', 'Failed to save configuration matrix data.');
+      Alert.alert('Error', 'Failed to update matrix data.');
     }
   };
 
@@ -116,114 +100,44 @@ export default function AddProductScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.navBtn}>
           <Ionicons name="chevron-back" size={22} color="#6366F1" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{editId ? 'UPDATE TERMINAL' : 'REGISTER TERMINAL'}</Text>
-        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/login')}>
-          <Text style={styles.avatarText}>AD</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{editId ? 'UPDATE CONFIGURATION' : 'REGISTER TERMINAL'}</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Hardware System Input</Text>
-        
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formCard}>
-          {/* Input 1: ชื่อสินค้า */}
-          <Text style={styles.inputLabel}>PRODUCT NAME / MODEL</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholder="e.g., WANBO X2 Max Smart"
-            placeholderTextColor="#4B5563"
-            value={name}
-            onChangeText={setName}
-          />
+          <Text style={styles.label}>PRODUCT NAME</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Model Name" placeholderTextColor="#4B5563" />
 
-          {/* Input 2: ราคา */}
-          <Text style={styles.inputLabel}>UNIT PRICE (THB)</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholder="e.g., 5990"
-            placeholderTextColor="#4B5563"
-            keyboardType="numeric"
-            value={price}
-            onChangeText={setPrice}
-          />
+          <Text style={styles.label}>UNIT PRICE (THB)</Text>
+          <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="numeric" placeholder="e.g. 5990" placeholderTextColor="#4B5563" />
 
-          {/* Input 3: จำนวนคลัง */}
-          <Text style={styles.inputLabel}>STOCK QUANTITY (UNITS)</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholder="e.g., 15"
-            placeholderTextColor="#4B5563"
-            keyboardType="numeric"
-            value={stock}
-            onChangeText={setStock}
-          />
+          <Text style={styles.label}>STOCK QUANTITY</Text>
+          <TextInput style={styles.input} value={stock} onChangeText={setStock} keyboardType="numeric" placeholder="e.g. 15" placeholderTextColor="#4B5563" />
 
-          {/* Input 4: URL รูปภาพ */}
-          <Text style={styles.inputLabel}>PRODUCT IMAGE URL</Text>
-          <TextInput
-            style={[styles.inputField, styles.urlInput]}
-            placeholder="Paste public web link (https://...)"
-            placeholderTextColor="#4B5563"
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={imageUrl}
-            onChangeText={setImageUrl}
-          />
-          <Text style={styles.inputHint}>
-            * ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// เท่านั้น (ห้ามใช้ blob:) เช่น: 
-            {"\n"}https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400
-          </Text>
+          <Text style={styles.label}>IMAGE URL LINK</Text>
+          <TextInput style={styles.input} value={imageUrl} onChangeText={setImageUrl} placeholder="Paste public image link (https://...)" placeholderTextColor="#4B5563" autoCapitalize="none" autoCorrect={false} />
+          <Text style={styles.hint}>* รูปภาพต้องเริ่มต้นด้วย https:// ห้ามขึ้นต้นด้วย blob: เพื่อให้แสดงผลได้อย่างถูกต้อง</Text>
         </View>
 
-        {/* ปุ่ม Submit บันทึกข้อมูล */}
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSaveProduct}>
-          <Ionicons name={editId ? "save-outline" : "add-circle-outline"} size={20} color="#FFF" style={{ marginRight: 8 }} />
-          <Text style={styles.submitBtnText}>
-            {editId ? 'APPLY CONFIGURATION CHANGES' : 'DEPLOY TO WAREHOUSE'}
-          </Text>
+        <TouchableOpacity style={styles.submitBtn} onPress={handleSave}>
+          <Text style={styles.submitText}>{editId ? 'APPLY CONFIGURATION CHANGES' : 'CREATE MATRIX'}</Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* Navigation */}
-      <View style={styles.navBar}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/dashboard')}>
-          <Ionicons name="grid-outline" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/add-product')}>
-          <Ionicons name="add-circle" size={20} color="#6366F1" />
-          <Text style={[styles.navText, { color: '#6366F1', fontWeight: 'bold' }]}>Add</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stock')}>
-          <MaterialCommunityIcons name="cube-outline" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Products</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/categories')}>
-          <Ionicons name="folder-open-outline" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Categories</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0B0F19' },
-  scrollContainer: { padding: 20, paddingBottom: 120 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111827', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#1F2937' },
   headerTitle: { fontSize: 13, fontWeight: '900', color: '#FFF', letterSpacing: 2 },
   navBtn: { backgroundColor: '#1E293B', padding: 8, borderRadius: 10 },
-  avatar: { backgroundColor: '#6366F1', width: 35, height: 35, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 12 },
-  sectionTitle: { fontSize: 10, fontWeight: '800', color: '#6366F1', marginTop: 10, marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1.5 },
+  scrollContainer: { padding: 20 },
   formCard: { backgroundColor: '#151F32', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#1E293B' },
-  inputLabel: { fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 8, letterSpacing: 0.5 },
-  inputField: { backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: '#FFF', fontSize: 14, marginBottom: 20, borderWidth: 1, borderColor: '#2D3748', fontWeight: '500' },
-  urlInput: { fontSize: 12 },
-  inputHint: { fontSize: 11, color: '#A0AEC0', marginTop: -12, marginBottom: 10, lineHeight: 16, fontWeight: '500' },
-  submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#6366F1', paddingVertical: 16, borderRadius: 14, marginTop: 24, shadowColor: '#6366F1', shadowOpacity: 0.2, shadowRadius: 10, elevation: 3 },
-  submitBtnText: { color: '#FFF', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
-  navBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, backgroundColor: '#111827', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#1F2937', zIndex: 10 },
-  navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-  navText: { fontSize: 10, color: '#9CA3AF', marginTop: 4, fontWeight: '600' }
+  label: { fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 8, letterSpacing: 0.5 },
+  input: { backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: '#FFF', fontSize: 14, marginBottom: 20, borderWidth: 1, borderColor: '#2D3748' },
+  hint: { fontSize: 10, color: '#6B7280', marginTop: -10, marginBottom: 10 },
+  submitBtn: { backgroundColor: '#6366F1', paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 24 },
+  submitText: { color: '#FFF', fontSize: 12, fontWeight: '800', letterSpacing: 1 }
 });
