@@ -1,104 +1,133 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
 export default function LoginScreen() {
- const router = useRouter();
- const [username, setUsername] = useState('');
- const [password, setPassword] = useState('');
- const handleLogin = () => {
-   // เมื่อกดปุ่มจะทำการเปลี่ยนหน้าไปที่หน้า dashboard ทันที
-   router.replace('/dashboard');
- };
- return (
-<SafeAreaView style={styles.container}>
-<View style={styles.card}>
-       {/* หัวข้อโลโก้แอป */}
-<Text style={styles.logoText}>Inventor.io</Text>
-       {/* ช่องกรอก Username */}
-<View style={styles.inputContainer}>
-<Text style={styles.inputLabel}>Username</Text>
-<TextInput
-           style={styles.input}
-           placeholder="Enter your username"
-           placeholderTextColor="#9CA3AF"
-           value={username}
-           onChangeText={setUsername}
-         />
-</View>
-       {/* ช่องกรอก Password */}
-<View style={styles.inputContainer}>
-<Text style={styles.inputLabel}>Password</Text>
-<TextInput
-           style={styles.input}
-           placeholder="Enter your password"
-           placeholderTextColor="#9CA3AF"
-           secureTextEntry
-           value={password}
-           onChangeText={setPassword}
-         />
-</View>
-       {/* ปุ่ม Log in */}
-<TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-<Text style={styles.loginButtonText}>Log in</Text>
-</TouchableOpacity>
-</View>
-</SafeAreaView>
- );
+  const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    // ระบบการจำลองตรวจสอบสิทธิ์แบบง่าย
+    if (username === 'admin' && password === '1234') {
+      router.push('/dashboard');
+    } else {
+      Alert.alert('Access Denied', 'Invalid terminal credentials.');
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.loginCard}>
+        {/* 🛠️ เปลี่ยนชื่อแบรนด์ใหม่ พร้อมจัดสไตล์ตัวอักษรให้ดูเฉี่ยวขึ้น */}
+        <View style={styles.brandContainer}>
+          <Text style={styles.brandText}>LUMEN<Text style={styles.brandDot}>.OS</Text></Text>
+          <Text style={styles.brandSub}>INVENTORY TERMINAL</Text>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>OPERATOR USERNAME</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Enter terminal username" 
+            placeholderTextColor="#4B5563" 
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>SECURITY PASSWORD</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Enter authorization key" 
+            placeholderTextColor="#4B5563" 
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            autoCapitalize="none"
+          />
+        </View>
+
+        {/* ปุ่มกดสไตล์นีออนม่วงสว่าง */}
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <Text style={styles.loginButtonText}>INITIALIZE SESSION</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
 }
+
 const styles = StyleSheet.create({
- container: {
-   flex: 1,
-   backgroundColor: '#F3F4F6', // พื้นหลังเทาอ่อนเหมือนหน้าแดชบอร์ด
-   justifyContent: 'center',
-   alignItems: 'center',
-   padding: 20,
- },
- card: {
-   backgroundColor: '#1E1B4B', // สีน้ำเงิน/ม่วงเข้ม ตามดีไซน์รูปแรกของอาจารย์
-   width: '100%',
-   maxWidth: 360,
-   borderRadius: 24,
-   padding: 30,
-   shadowColor: '#000',
-   shadowOpacity: 0.2,
-   shadowRadius: 10,
-   elevation: 5,
- },
- logoText: {
-   fontSize: 32,
-   fontWeight: 'bold',
-   color: '#FFFFFF',
-   textAlign: 'center',
-   marginBottom: 40,
-   marginTop: 10,
- },
- inputContainer: {
-   marginBottom: 20,
- },
- inputLabel: {
-   color: '#FFFFFF',
-   fontSize: 14,
-   marginBottom: 8,
- },
- input: {
-   backgroundColor: '#FFFFFF',
-   borderRadius: 8,
-   paddingHorizontal: 16,
-   paddingVertical: 12,
-   fontSize: 16,
-   color: '#1E1B4B',
- },
- loginButton: {
-   backgroundColor: '#FFFFFF',
-   borderRadius: 8,
-   paddingVertical: 14,
-   alignItems: 'center',
-   marginTop: 20,
-   marginBottom: 10,
- },
- loginButtonText: {
-   color: '#1E1B4B',
-   fontSize: 16,
-   fontWeight: 'bold',
- },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#0B0F19', // พื้นหลังมืดเข้าชุดกับหน้าอื่นๆ
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  loginCard: { 
+    backgroundColor: '#151F32', // ตัวกล่องสีกรมท่าเข้มมีมิติ
+    width: '85%', 
+    padding: 30, 
+    borderRadius: 28, 
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    shadowColor: '#6366F1',
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 5
+  },
+  brandContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  brandText: { 
+    fontSize: 28, 
+    fontWeight: '900', 
+    color: '#FFF', 
+    letterSpacing: 2 
+  },
+  brandDot: {
+    color: '#6366F1', // จุดสีม่วงนีออนเรืองแสง
+  },
+  brandSub: {
+    fontSize: 9,
+    color: '#9CA3AF',
+    fontWeight: '700',
+    letterSpacing: 3,
+    marginTop: 4
+  },
+  inputGroup: { 
+    marginBottom: 18 
+  },
+  label: { 
+    fontSize: 10, 
+    fontWeight: '800', 
+    color: '#6366F1', 
+    marginBottom: 8,
+    letterSpacing: 1
+  },
+  input: { 
+    backgroundColor: '#0B0F19', 
+    padding: 14, 
+    borderRadius: 12, 
+    fontSize: 14, 
+    color: '#FFF', 
+    borderWidth: 1, 
+    borderColor: '#374151' 
+  },
+  loginButton: { 
+    backgroundColor: '#6366F1', 
+    padding: 16, 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    marginTop: 12 
+  },
+  loginButtonText: { 
+    color: '#FFF', 
+    fontSize: 13, 
+    fontWeight: '800', 
+    letterSpacing: 1.5 
+  }
 });

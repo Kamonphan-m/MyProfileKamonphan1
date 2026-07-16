@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'WANDO WANDO X2 Max Smart Android Projector', price: '5,990 บ.', stock: 15, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
-  { id: '2', name: 'WANBO WANBO Mini Projector', price: '3,502 บ.', stock: 10, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
+  { id: '1', name: 'WANDO WANDO X2 Max Smart Android Projector', price: '5,990 บ.', stock: 15, status: 'มีสินค้า' },
+  { id: '2', name: 'WANBO WANBO Mini Projector', price: '3,502 บ.', stock: 10, status: 'มีสินค้า' },
 ];
 
 export default function StockScreen() {
@@ -43,20 +43,21 @@ export default function StockScreen() {
   };
 
   const getStatusText = (stock: number) => {
-    if (stock === 0) return 'สินค้าหมด';
-    if (stock <= 2) return 'สต็อกน้อย';
-    return 'มีสินค้า';
+    if (stock === 0) return 'OUT OF STOCK';
+    if (stock <= 2) return 'LOW STOCK';
+    return 'AVAILABLE';
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header สไตล์นีออนล้ำยุค */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/dashboard')}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+        <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.navBtn}>
+          <Ionicons name="chevron-back" size={22} color="#6366F1" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>คลังสินค้าโปรเจคเตอร์</Text>
-        <TouchableOpacity onPress={() => router.push('/add-product')}>
-          <Ionicons name="add-circle-outline" size={26} color="#FFF" />
+        <Text style={styles.headerTitle}>TERMINAL STOCK</Text>
+        <TouchableOpacity onPress={() => router.push('/add-product')} style={styles.navBtn}>
+          <Ionicons name="add" size={22} color="#6366F1" />
         </TouchableOpacity>
       </View>
 
@@ -64,51 +65,50 @@ export default function StockScreen() {
         data={projectors}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 30 }}
         renderItem={({ item }) => {
           const displayPrice = item.price.toString().includes('บ.') ? item.price : `${Number(item.price).toLocaleString()} บ.`;
-          const displayImage = item.image && item.image.trim() !== '' ? item.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400';
-          const currentStatus = item.status || getStatusText(item.stock);
+          const currentStatus = getStatusText(item.stock);
 
           return (
             <TouchableOpacity 
               style={styles.itemCard}
               onPress={() => router.push({
                 pathname: '/product-detail',
-                params: { name: item.name, price: displayPrice, stock: item.stock, image: displayImage }
+                params: { name: item.name, price: displayPrice, stock: item.stock }
               })}
             >
-              <View style={styles.leftContent}>
-                <Image source={{ uri: displayImage }} style={styles.productImage} resizeMode="cover" />
-                <View style={styles.infoContainer}>
-                  <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-                  <Text style={styles.itemPrice}>ราคา: {displayPrice}</Text>
-                  <Text style={styles.itemStock}>คงเหลือ: {item.stock} เครื่อง</Text>
+              {/* ย้ายรายละเอียดมาฝั่งซ้ายทั้งหมด (ไม่มี Component รูปภาพแล้ว) */}
+              <View style={styles.infoContainer}>
+                <View style={styles.badgeRow}>
+                  <Text style={[
+                    styles.statusTag, 
+                    { 
+                      backgroundColor: item.stock === 0 ? '#2D1F29' : item.stock <= 2 ? '#2A241F' : '#1A2E26',
+                      color: item.stock === 0 ? '#EF4444' : item.stock <= 2 ? '#F59E0B' : '#10B981' 
+                    }
+                  ]}>
+                    {currentStatus}
+                  </Text>
+                  <Text style={styles.itemStock}>QTY: {item.stock} Units</Text>
                 </View>
+                
+                <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.itemPrice}>{displayPrice}</Text>
               </View>
 
+              {/* ฝั่งขวารวมปุ่มคำสั่งการจัดการเป็นสัดส่วนชัดเจน */}
               <View style={styles.rightContent}>
-                <Text style={[
-                  styles.statusTag, 
-                  { 
-                    backgroundColor: item.stock === 0 ? '#FEE2E2' : item.stock <= 2 ? '#FEF3C7' : '#D1FAE5',
-                    color: item.stock === 0 ? '#EF4444' : item.stock <= 2 ? '#D97706' : '#10B981' 
-                  }
-                ]}>
-                  {currentStatus}
-                </Text>
-                
-                {/* 🛠️ ส่วนปุ่มกดฝั่งขวา: เพิ่มปุ่มแก้ไขเข้ามาคู่กับปุ่มลบ */}
                 <View style={styles.actionRow}>
                   <TouchableOpacity 
                     style={styles.editBtn} 
                     onPress={() => router.push({ pathname: '/add-product', params: { editId: item.id } })}
                   >
-                    <Ionicons name="pencil-outline" size={16} color="#4B5563" />
+                    <Ionicons name="settings-outline" size={14} color="#38BDF8" />
                   </TouchableOpacity>
                   
                   <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
-                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                    <Ionicons name="trash-outline" size={14} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -121,19 +121,39 @@ export default function StockScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1A1A1A', paddingHorizontal: 20, paddingVertical: 15 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
-  itemCard: { backgroundColor: '#fff', padding: 14, borderRadius: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 15, marginTop: 12, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
-  leftContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  productImage: { width: 75, height: 75, borderRadius: 10, backgroundColor: '#E5E7EB', marginRight: 12 },
-  infoContainer: { flex: 1, paddingRight: 4 },
-  itemName: { fontSize: 14, fontWeight: 'bold', color: '#1E1B4B' },
-  itemPrice: { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  itemStock: { fontSize: 13, color: '#1E1B4B', fontWeight: '500', marginTop: 2 },
-  rightContent: { alignItems: 'flex-end', justifyContent: 'space-between', height: 75 },
-  statusTag: { fontSize: 10, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, overflow: 'hidden' },
-  actionRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  editBtn: { padding: 4, marginRight: 10 },
-  deleteBtn: { padding: 4 }
+  container: { flex: 1, backgroundColor: '#0B0F19' }, // เปลี่ยนเป็นพื้นหลังห้องมืดสไตล์ระบบเซิร์ฟเวอร์
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    backgroundColor: '#111827', 
+    paddingHorizontal: 20, 
+    paddingVertical: 18, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#1F2937' 
+  },
+  headerTitle: { fontSize: 14, fontWeight: '900', color: '#FFF', letterSpacing: 2 },
+  navBtn: { backgroundColor: '#1E293B', padding: 8, borderRadius: 10 },
+  itemCard: { 
+    backgroundColor: '#151F32', 
+    padding: 16, 
+    borderRadius: 20, 
+    flexDirection: 'row', 
+    marginHorizontal: 16, 
+    marginTop: 14, 
+    borderWidth: 1, 
+    borderColor: '#1E293B',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  infoContainer: { flex: 1, justifyContent: 'space-between' },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  statusTag: { fontSize: 8, fontWeight: '800', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, overflow: 'hidden', letterSpacing: 0.5, marginRight: 10 },
+  itemStock: { fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
+  itemName: { fontSize: 14, fontWeight: 'bold', color: '#FFF' },
+  itemPrice: { fontSize: 13, color: '#6366F1', fontWeight: '700', marginTop: 4 },
+  rightContent: { justifyContent: 'center', alignItems: 'flex-end', marginLeft: 12 },
+  actionRow: { flexDirection: 'row', alignItems: 'center' },
+  editBtn: { backgroundColor: '#1E293B', padding: 8, borderRadius: 10, marginRight: 8 },
+  deleteBtn: { backgroundColor: '#2D1F29', padding: 8, borderRadius: 10 }
 });
