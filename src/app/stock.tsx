@@ -2,11 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+// 📸 แก้ไขข้อมูลเริ่มต้น: ลบคำซ้ำ และใส่ลิงก์รูปภาพที่แสดงผลได้จริงชัวร์ๆ
 const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'WANDO WANDO X2 Max Smart Android Projector', price: '5,990 บ.', stock: 15, status: 'มีสินค้า' },
-  { id: '2', name: 'WANBO WANBO Mini Projector', price: '3,502 บ.', stock: 10, status: 'มีสินค้า' },
+  { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: '5,990 บ.', stock: 15, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400&auto=format&fit=crop' },
+  { id: '2', name: 'WANBO Mini Projector', price: '3,502 บ.', stock: 10, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400&auto=format&fit=crop' },
+  { id: '3', name: 'WANBO Projector Android 9.0 / Mozart', price: '17,590 บ.', stock: 15, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400&auto=format&fit=crop' },
+  { id: '4', name: 'ACER Projector x 1328wi', price: '17,390 บ.', stock: 15, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400&auto=format&fit=crop' },
+  { id: '5', name: 'Epson Projector / EB-E24', price: '17,790 บ.', stock: 25, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400&auto=format&fit=crop' },
 ];
 
 export default function StockScreen() {
@@ -65,36 +69,45 @@ export default function StockScreen() {
         data={projectors}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 30 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => {
           const displayPrice = item.price.toString().includes('บ.') ? item.price : `${Number(item.price).toLocaleString()} บ.`;
           const currentStatus = getStatusText(item.stock);
+          
+          // ตรวจสอบข้อมูลรูปภาพ ถ้าไม่มีให้ใช้รูป Default ที่เตรียมไว้
+          const displayImage = item.image && item.image.trim() !== '' 
+            ? item.image 
+            : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400&auto=format&fit=crop';
 
           return (
             <TouchableOpacity 
               style={styles.itemCard}
               onPress={() => router.push({
                 pathname: '/product-detail',
-                params: { name: item.name, price: displayPrice, stock: item.stock }
+                params: { name: item.name, price: displayPrice, stock: item.stock, image: displayImage }
               })}
             >
-              {/* ย้ายรายละเอียดมาฝั่งซ้ายทั้งหมด (ไม่มี Component รูปภาพแล้ว) */}
-              <View style={styles.infoContainer}>
-                <View style={styles.badgeRow}>
-                  <Text style={[
-                    styles.statusTag, 
-                    { 
-                      backgroundColor: item.stock === 0 ? '#2D1F29' : item.stock <= 2 ? '#2A241F' : '#1A2E26',
-                      color: item.stock === 0 ? '#EF4444' : item.stock <= 2 ? '#F59E0B' : '#10B981' 
-                    }
-                  ]}>
-                    {currentStatus}
-                  </Text>
-                  <Text style={styles.itemStock}>QTY: {item.stock} Units</Text>
-                </View>
+              <View style={styles.leftContent}>
+                {/* 📸 ดึงกล่องรูปภาพกลับมาจัดวางฝั่งซ้ายมืออย่างสวยงามและไม่หายแน่นอน */}
+                <Image source={{ uri: displayImage }} style={styles.productImage} resizeMode="cover" />
                 
-                <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.itemPrice}>{displayPrice}</Text>
+                <View style={styles.infoContainer}>
+                  <View style={styles.badgeRow}>
+                    <Text style={[
+                      styles.statusTag, 
+                      { 
+                        backgroundColor: item.stock === 0 ? '#2D1F29' : item.stock <= 2 ? '#2A241F' : '#1A2E26',
+                        color: item.stock === 0 ? '#EF4444' : item.stock <= 2 ? '#F59E0B' : '#10B981' 
+                      }
+                    ]}>
+                      {currentStatus}
+                    </Text>
+                    <Text style={styles.itemStock}>QTY: {item.stock} Units</Text>
+                  </View>
+                  
+                  <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.itemPrice}>{displayPrice}</Text>
+                </View>
               </View>
 
               {/* ฝั่งขวารวมปุ่มคำสั่งการจัดการเป็นสัดส่วนชัดเจน */}
@@ -121,7 +134,7 @@ export default function StockScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0B0F19' }, // เปลี่ยนเป็นพื้นหลังห้องมืดสไตล์ระบบเซิร์ฟเวอร์
+  container: { flex: 1, backgroundColor: '#0B0F19' }, 
   header: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
@@ -136,7 +149,7 @@ const styles = StyleSheet.create({
   navBtn: { backgroundColor: '#1E293B', padding: 8, borderRadius: 10 },
   itemCard: { 
     backgroundColor: '#151F32', 
-    padding: 16, 
+    padding: 12, 
     borderRadius: 20, 
     flexDirection: 'row', 
     marginHorizontal: 16, 
@@ -146,6 +159,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between'
   },
+  leftContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  productImage: { width: 65, height: 65, borderRadius: 14, backgroundColor: '#1E293B', marginRight: 12 },
   infoContainer: { flex: 1, justifyContent: 'space-between' },
   badgeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   statusTag: { fontSize: 8, fontWeight: '800', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, overflow: 'hidden', letterSpacing: 0.5, marginRight: 10 },
