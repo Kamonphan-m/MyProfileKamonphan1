@@ -146,6 +146,7 @@ export default function StockScreen() {
                 router.push({
                   pathname: '/product-detail',
                   params: {
+                    id: item.id,
                     name: item.name,
                     price: displayPrice,
                     stock: item.stock,
