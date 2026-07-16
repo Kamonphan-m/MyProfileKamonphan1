@@ -3,6 +3,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+// 1. นำเข้า AsyncStorage เพื่อใช้บันทึกข้อมูลถาวร
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddProductScreen() {
   const router = useRouter();
@@ -32,24 +34,41 @@ export default function AddProductScreen() {
     }
   };
 
-  // 🛠️ ปรับฟังก์ชันเซฟใหม่: ตัดกล่อง Alert ซ้อนออกชั่วคราว เพื่อลดปัญหาค้าง และส่งข้อมูลตรงผ่านออบเจกต์ปลอดภัย 100%
-  const handleSave = () => {
+  // 🛠️ ปรับฟังก์ชันเซฟใหม่: บันทึกลงเครื่องแบบถาวรก่อนย้ายหน้า
+  const handleSave = async () => {
     if (!name || !brand || !price || !stock) {
       Alert.alert("Error", "Please fill in all fields (including Price and Stock)");
       return;
     }
 
-    // ย้ายหน้าตรง ๆ ไปที่คลังสินค้าพร้อมแนบข้อมูลพ่วงทันที ไม่ต้องผ่านฟังก์ชันซับซ้อน
-    router.push({
-      pathname: '/stock',
-      params: {
-        newProductName: name,
-        newProductBrand: brand,
-        newProductPrice: price,
-        newProductStock: stock,
-        newProductImage: imageUri || '',
-      },
-    });
+    // สร้างออบเจกต์ข้อมูลสินค้าชิ้นใหม่
+    const newProduct = {
+      id: Date.now().toString(), // ใช้ timestamp ทำเป็น ID ของสินค้า
+      name: `${brand} ${name}`,  // รวมแบรนด์กับชื่อโมเดลเหมือนหน้าคลังสินค้า
+      price: price,
+      stock: stock,
+      image: imageUri || '',     // เซฟ path รูปภาพไว้
+    };
+
+    try {
+      // 1. ดึงรายการสินค้าเดิมที่เคยเซฟไว้ในเครื่องออกมาก่อน
+      const existingProducts = await AsyncStorage.getItem('@vanta_products');
+      const products = existingProducts ? JSON.parse(existingProducts) : [];
+
+      // 2. นำสินค้าชิ้นใหม่ต่อท้ายเข้าไปในอาเรย์
+      products.push(newProduct);
+
+      // 3. บันทึกอาเรย์ชุดใหม่กลับลงเครื่องแบบถาวร (แปลงเป็นสตริงก่อนเซฟ)
+      await AsyncStorage.setItem('@vanta_products', JSON.stringify(products));
+
+      // 4. เมื่อเซฟลงเครื่องสำเร็จ ค่อยย้ายหน้ากลับไปที่หน้า /stock
+      // ไม่ต้องส่ง params พ่วงไปให้หนักเครื่องแล้ว เพราะข้อมูลอยู่ในหน่วยความจำหลักแล้วค่ะ
+      router.push('/stock');
+      
+    } catch (error) {
+      Alert.alert("Error", "Failed to save product data.");
+      console.error(error);
+    }
   };
 
   return (
@@ -77,14 +96,14 @@ export default function AddProductScreen() {
         </TouchableOpacity>
 
         <Text style={styles.label}>Projector Model Name</Text>
-        <TextInput style={styles.input} placeholder="e.g., Epson EB-X06 4K" placeholderTextColor="#9CA3AF" value={name} onChangeText={setName} />
+        <TextInput style={styles.input} placeholder="e.g., X2 Max Smart Android" placeholderTextColor="#9CA3AF" value={name} onChangeText={setName} />
 
         <Text style={styles.label}>Brand</Text>
-        <TextInput style={styles.input} placeholder="e.g., Epson, BenQ, Acer" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
+        <TextInput style={styles.input} placeholder="e.g., WANBO, EPSON" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
 
         <View style={styles.row}>
           <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.label}>Price (USD)</Text>
+            <Text style={styles.label}>Price (THB/USD)</Text>
             <TextInput style={styles.input} placeholder="0.00" keyboardType="numeric" placeholderTextColor="#9CA3AF" value={price} onChangeText={setPrice} />
           </View>
           <View style={{ flex: 1 }}>

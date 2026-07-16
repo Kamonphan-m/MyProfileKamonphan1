@@ -1,108 +1,65 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+// ข้อมูลเริ่มต้นสำหรับแสดงผลกรณีที่ยังไม่มีการเพิ่มสินค้าในเครื่อง
 const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'WANDO X2 Max Smart Android Projector', price: '5,990 บ.', stock: 15, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
-  { id: '2', name: 'WANDO Mini Projector', price: '3,502 บ.', stock: 10, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
+  { id: '1', name: 'WANDO WANDO X2 Max Smart Android Projector', price: '5,990 บ.', stock: 15, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
+  { id: '2', name: 'WANBO WANBO Mini Projector', price: '3,502 บ.', stock: 10, status: 'มีสินค้า', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400' },
 ];
 
 export default function StockScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams();
-  
-  const { 
-    newProductName, productName, name,
-    newProductBrand, productBrand, brand,
-    newProductPrice, productPrice, price,
-    newProductStock, productStock, stock,
-    newProductImage, productImage, imageUri, image 
-  } = params;
-
   const [projectors, setProjectors] = useState<any[]>([]);
 
-  useEffect(() => {
-    const handleSyncData = async () => {
-      try {
-        const savedData = await AsyncStorage.getItem('@projector_products');
-        let currentList = savedData !== null ? JSON.parse(savedData) : INITIAL_PROJECTOR_DATA;
-
-        const finalName = newProductName || productName || name;
-        
-        // 🛠️ แก้ไขเพิ่มตรงนี้: ถ้าไม่มีการส่งข้อมูลสินค้าใหม่มา (เช่น เปลี่ยนหน้าไปมาปกติ)
-        // ให้แสดงรายการปัจจุบันที่มีอยู่ แล้วจบฟังก์ชันทันที รูปจะได้ไม่หายค่ะ
-        if (!finalName) {
-          const verifiedList = currentList.map((item: any) => ({
-            ...item,
-            image: item.image && typeof item.image === 'string' ? item.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
-          }));
-          setProjectors(verifiedList);
-          return;
-        }
-
-        const finalPrice = newProductPrice || productPrice || price;
-        const finalBrand = newProductBrand || productBrand || brand;
-        const finalStock = newProductStock || productStock || stock;
-        
-        let finalImage = newProductImage || productImage || imageUri || image;
-        let validImageUri = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400';
-        
-        if (finalImage && typeof finalImage === 'string' && finalImage.trim() !== '') {
-          validImageUri = finalImage;
-        }
-
-        if (finalName && finalPrice) {
-          const stockNum = parseInt(finalStock as string, 10) || 0;
-          let calculatedStatus = 'มีสินค้า';
-          if (stockNum === 0) {
-            calculatedStatus = 'สินค้าหมด';
-          } else if (stockNum <= 2) {
-            calculatedStatus = 'สต็อกน้อย';
-          }
-
-          const newProduct = {
-            id: Date.now().toString(),
-            name: `${finalBrand ? finalBrand + ' ' : ''}${finalName}`,
-            price: `${Number(finalPrice).toLocaleString()} บ.`,
-            stock: stockNum,
-            status: calculatedStatus,
-            image: validImageUri
-          };
-
-          currentList = [newProduct, ...currentList];
-          await AsyncStorage.setItem('@projector_products', JSON.stringify(currentList));
+  // 🛠️ ดึงข้อมูลใหม่จาก AsyncStorage ทุกครั้งที่หน้าจอนี้ถูกเปิดขึ้นมา (Focus)
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadProjectorData = async () => {
+        try {
+          const savedData = await AsyncStorage.getItem('@vanta_products');
           
-          router.setParams({ 
-            newProductName: '', productName: '', name: '',
-            newProductPrice: '', productPrice: '', price: '',
-            newProductImage: '', productImage: '', imageUri: '', image: ''
-          });
+          if (savedData !== null) {
+            // ดึงข้อมูลสินค้าที่บันทึกไว้
+            const parsedData = JSON.parse(savedData);
+            setProjectors(parsedData);
+          } else {
+            // ถ้าเปิดแอปครั้งแรกและยังไม่มีข้อมูล ให้ใช้ข้อมูลเริ่มต้นและบันทึกลงเครื่องไว้ก่อน
+            await AsyncStorage.setItem('@vanta_products', JSON.stringify(INITIAL_PROJECTOR_DATA));
+            setProjectors(INITIAL_PROJECTOR_DATA);
+          }
+        } catch (error) {
+          console.error("Failed to load product data:", error);
         }
+      };
 
-        const verifiedList = currentList.map((item: any) => ({
-          ...item,
-          image: item.image && typeof item.image === 'string' ? item.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400'
-        }));
+      loadProjectorData();
+    }, [])
+  );
 
-        setProjectors(verifiedList);
-      } catch (e) {
-        console.log(e);
-      }
-    };
-
-    handleSyncData();
-  }, [newProductName, productName, name, newProductPrice, productPrice, price]); // รันเฉพาะเมื่อมีข้อมูลสินค้าใหม่ถูกส่งเข้ามา
-
+  // 🛠️ ฟังก์ชันสำหรับลบสินค้า
   const handleDelete = async (id: string) => {
-    const updatedData = projectors.filter(item => item.id !== id);
-    setProjectors(updatedData);
-    await AsyncStorage.setItem('@projector_products', JSON.stringify(updatedData));
+    try {
+      const updatedData = projectors.filter(item => item.id !== id);
+      setProjectors(updatedData); // อัปเดต UI ทันที
+      await AsyncStorage.setItem('@vanta_products', JSON.stringify(updatedData)); // บันทึกผลลัพธ์ใหม่ลงเครื่อง
+    } catch (error) {
+      console.error("Failed to delete product:", error);
+    }
+  };
+
+  // ฟังก์ชันคำนวณสถานะสินค้า (สำหรับแสดงผลแท็กสถานะ)
+  const getStatusText = (stock: number) => {
+    if (stock === 0) return 'สินค้าหมด';
+    if (stock <= 2) return 'สต็อกน้อย';
+    return 'มีสินค้า';
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header สไตล์ VANTA */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/dashboard')}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -113,54 +70,63 @@ export default function StockScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* รายการสินค้า */}
       <FlatList
         data={projectors}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.itemCard}
-            onPress={() => router.push({
-              pathname: '/product-detail',
-              params: { 
-                name: item.name, 
-                price: item.price, 
-                stock: item.stock, 
-                image: item.image 
-              }
-            })}
-          >
-            <View style={styles.leftContent}>
-              <Image 
-                source={{ uri: item.image }} 
-                style={styles.productImage} 
-                resizeMode="cover"
-              />
-              <View style={styles.infoContainer}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemPrice}>ราคา: {item.price}</Text>
-                <Text style={styles.itemStock}>คงเหลือ: {item.stock} เครื่อง</Text>
-              </View>
-            </View>
+        renderItem={({ item }) => {
+          // ตรวจสอบความถูกต้องของโครงสร้างราคา
+          const displayPrice = item.price.toString().includes('บ.') ? item.price : `${Number(item.price).toLocaleString()} บ.`;
+          // ตรวจสอบความถูกต้องของภาพประกอบ หากไม่มีภาพให้สลับไปใช้ Placeholder อัตโนมัติ
+          const displayImage = item.image && item.image.trim() !== '' ? item.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=400';
+          const currentStatus = item.status || getStatusText(item.stock);
 
-            <View style={styles.rightContent}>
-              <Text style={[
-                styles.statusTag, 
-                { 
-                  backgroundColor: item.stock === 0 ? '#FEE2E2' : item.stock <= 2 ? '#FEF3C7' : '#D1FAE5',
-                  color: item.stock === 0 ? '#EF4444' : item.stock <= 2 ? '#D97706' : '#10B981' 
+          return (
+            <TouchableOpacity 
+              style={styles.itemCard}
+              onPress={() => router.push({
+                pathname: '/product-detail',
+                params: { 
+                  name: item.name, 
+                  price: displayPrice, 
+                  stock: item.stock, 
+                  image: displayImage 
                 }
-              ]}>
-                {item.status}
-              </Text>
-              
-              <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
-                <Ionicons name="trash-outline" size={16} color="#EF4444" />
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
+              })}
+            >
+              <View style={styles.leftContent}>
+                <Image 
+                  source={{ uri: displayImage }} 
+                  style={styles.productImage} 
+                  resizeMode="cover"
+                />
+                <View style={styles.infoContainer}>
+                  <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                  <Text style={styles.itemPrice}>ราคา: {displayPrice}</Text>
+                  <Text style={styles.itemStock}>คงเหลือ: {item.stock} เครื่อง</Text>
+                </View>
+              </View>
+
+              <View style={styles.rightContent}>
+                <Text style={[
+                  styles.statusTag, 
+                  { 
+                    backgroundColor: item.stock === 0 ? '#FEE2E2' : item.stock <= 2 ? '#FEF3C7' : '#D1FAE5',
+                    color: item.stock === 0 ? '#EF4444' : item.stock <= 2 ? '#D97706' : '#10B981' 
+                  }
+                ]}>
+                  {currentStatus}
+                </Text>
+                
+                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
+                  <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
     </SafeAreaView>
   );
@@ -173,8 +139,8 @@ const styles = StyleSheet.create({
   itemCard: { backgroundColor: '#fff', padding: 14, borderRadius: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 15, marginTop: 12, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
   leftContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   productImage: { width: 75, height: 75, borderRadius: 10, backgroundColor: '#E5E7EB', marginRight: 12 },
-  infoContainer: { flex: 1 },
-  itemName: { fontSize: 15, fontWeight: 'bold', color: '#1E1B4B' },
+  infoContainer: { flex: 1, paddingRight: 4 },
+  itemName: { fontSize: 14, fontWeight: 'bold', color: '#1E1B4B' },
   itemPrice: { fontSize: 13, color: '#6B7280', marginTop: 2 },
   itemStock: { fontSize: 13, color: '#1E1B4B', fontWeight: '500', marginTop: 2 },
   rightContent: { alignItems: 'flex-end', justifyContent: 'space-between', height: 75 },
