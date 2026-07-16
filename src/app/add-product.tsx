@@ -1,19 +1,46 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-// 1. นำเข้า AsyncStorage เพื่อใช้บันทึกข้อมูลถาวร
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AddProductScreen() {
   const router = useRouter();
+  const { editId } = useLocalSearchParams(); // รับไอดีของตัวที่จะแก้ไขมา
 
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
+
+  // 🛠️ ถ้ามี editId ส่งมา ให้ไปดึงข้อมูลเก่ามาเติมใน Input ค้างไว้ให้อัตโนมัติ
+  useEffect(() => {
+    if (editId) {
+      const loadProductToEdit = async () => {
+        try {
+          const savedData = await AsyncStorage.getItem('@vanta_products');
+          if (savedData) {
+            const products = JSON.parse(savedData);
+            const target = products.find((p: any) => p.id === editId);
+            if (target) {
+              // ล้างคำว่า "บ." ออกจากราคาก่อนนำมาใส่ช่องกรอกข้อมูล
+              const cleanPrice = target.price.toString().replace(/[^\d.]/g, '');
+              
+              setName(target.name);
+              setPrice(cleanPrice);
+              setStock(target.stock.toString());
+              setImageUri(target.image);
+            }
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      loadProductToEdit();
+    }
+  }, [editId]);
 
   const handleSelectImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,35 +61,46 @@ export default function AddProductScreen() {
     }
   };
 
-  // 🛠️ ปรับฟังก์ชันเซฟใหม่: บันทึกลงเครื่องแบบถาวรก่อนย้ายหน้า
   const handleSave = async () => {
-    if (!name || !brand || !price || !stock) {
-      Alert.alert("Error", "Please fill in all fields (including Price and Stock)");
+    if (!name || !price || !stock) {
+      Alert.alert("Error", "Please fill in all required fields.");
       return;
     }
 
-    // สร้างออบเจกต์ข้อมูลสินค้าชิ้นใหม่
-    const newProduct = {
-      id: Date.now().toString(), // ใช้ timestamp ทำเป็น ID ของสินค้า
-      name: `${brand} ${name}`,  // รวมแบรนด์กับชื่อโมเดลเหมือนหน้าคลังสินค้า
-      price: price,
-      stock: stock,
-      image: imageUri || '',     // เซฟ path รูปภาพไว้
-    };
-
     try {
-      // 1. ดึงรายการสินค้าเดิมที่เคยเซฟไว้ในเครื่องออกมาก่อน
       const existingProducts = await AsyncStorage.getItem('@vanta_products');
-      const products = existingProducts ? JSON.parse(existingProducts) : [];
+      let products = existingProducts ? JSON.parse(existingProducts) : [];
 
-      // 2. นำสินค้าชิ้นใหม่ต่อท้ายเข้าไปในอาเรย์
-      products.push(newProduct);
+      const stockNum = parseInt(stock, 10) || 0;
+      const formattedPrice = price.includes('บ.') ? price : `${Number(price).toLocaleString()} บ.`;
 
-      // 3. บันทึกอาเรย์ชุดใหม่กลับลงเครื่องแบบถาวร (แปลงเป็นสตริงก่อนเซฟ)
+      if (editId) {
+        // 🛠️ กรณี "แก้ไขสินค้าเดิม": ทำการ Map แทนที่ตัวเก่าตัวเดิมที่มีไอดีตรงกัน
+        products = products.map((prod: any) => {
+          if (prod.id === editId) {
+            return {
+              ...prod,
+              name: brand ? `${brand} ${name}` : name,
+              price: formattedPrice,
+              stock: stockNum,
+              image: imageUri || '',
+            };
+          }
+          return prod;
+        });
+      } else {
+        // กรณี "เพิ่มสินค้าชิ้นใหม่": นำข้อมูลต่อไปท้ายสุด
+        const newProduct = {
+          id: Date.now().toString(),
+          name: brand ? `${brand} ${name}` : name,
+          price: formattedPrice,
+          stock: stockNum,
+          image: imageUri || '',
+        };
+        products.push(newProduct);
+      }
+
       await AsyncStorage.setItem('@vanta_products', JSON.stringify(products));
-
-      // 4. เมื่อเซฟลงเครื่องสำเร็จ ค่อยย้ายหน้ากลับไปที่หน้า /stock
-      // ไม่ต้องส่ง params พ่วงไปให้หนักเครื่องแล้ว เพราะข้อมูลอยู่ในหน่วยความจำหลักแล้วค่ะ
       router.push('/stock');
       
     } catch (error) {
@@ -73,12 +111,12 @@ export default function AddProductScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header สไตล์ VANTA */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add New Projector</Text>
+        {/* ปรับหัวข้อตามสถานะการทำงาน */}
+        <Text style={styles.headerTitle}>{editId ? 'Edit Projector' : 'Add New Projector'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -95,15 +133,20 @@ export default function AddProductScreen() {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.label}>Projector Model Name</Text>
-        <TextInput style={styles.input} placeholder="e.g., X2 Max Smart Android" placeholderTextColor="#9CA3AF" value={name} onChangeText={setName} />
+        <Text style={styles.label}>Projector Model / Full Name</Text>
+        <TextInput style={styles.input} placeholder="e.g., Epson EB-X06 4K" placeholderTextColor="#9CA3AF" value={name} onChangeText={setName} />
 
-        <Text style={styles.label}>Brand</Text>
-        <TextInput style={styles.input} placeholder="e.g., WANBO, EPSON" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
+        {/* ปิดช่องแบรนด์ไว้กรณีแก้ไข เพราะชื่อแบรนด์จะรวมอยู่ใน Model Name เรียบร้อยแล้ว */}
+        {!editId && (
+          <>
+            <Text style={styles.label}>Brand</Text>
+            <TextInput style={styles.input} placeholder="e.g., WANBO, EPSON" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
+          </>
+        )}
 
         <View style={styles.row}>
           <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.label}>Price (THB/USD)</Text>
+            <Text style={styles.label}>Price</Text>
             <TextInput style={styles.input} placeholder="0.00" keyboardType="numeric" placeholderTextColor="#9CA3AF" value={price} onChangeText={setPrice} />
           </View>
           <View style={{ flex: 1 }}>
@@ -113,7 +156,7 @@ export default function AddProductScreen() {
         </View>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Product</Text>
+          <Text style={styles.saveButtonText}>{editId ? 'Update Product' : 'Save Product'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
