@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 
 export default function ProductDetailScreen() {
   const router = useRouter();
@@ -23,7 +22,6 @@ export default function ProductDetailScreen() {
         if (currentItem) {
           setProduct(currentItem);
         } else {
-          // Fallback ถ้าค้นหาไม่พบให้ใช้ params
           setProduct({
             id: params.id || '',
             name: params.name || '',
@@ -39,7 +37,12 @@ export default function ProductDetailScreen() {
   };
 
   const displayImage = product.image && product.image.trim() !== '' ? product.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop';
+  
+  // 🔗 ดึงข้อมูลสินค้าทำเป็น JSON String เพื่อสร้าง QR
   const qrDataString = JSON.stringify({ id: product.id, name: product.name, price: product.price, stock: product.stock });
+  
+  // 🌐 ใช้บริการสร้าง QR Code ออนไลน์ฟรี (ทำให้แอปไม่ต้องลง Library เสริมให้พังอีกต่อไป!)
+  const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=0b0f19&data=${encodeURIComponent(qrDataString)}`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -81,10 +84,15 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ส่วนแสดง QR Code ด้วย API รูปภาพ */}
         <View style={styles.qrContainer}>
           <Text style={styles.qrTitle}>Product QR Code Matrix</Text>
           <View style={styles.qrWrapper}>
-            <QRCode value={qrDataString} size={140} backgroundColor="#FFF" color="#0B0F19" />
+            <Image 
+              source={{ uri: qrCodeApiUrl }} 
+              style={{ width: 140, height: 140 }} 
+              resizeMode="contain"
+            />
           </View>
         </View>
       </ScrollView>
