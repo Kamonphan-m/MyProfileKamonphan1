@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
+ 
 const INITIAL_PROJECTOR_DATA = [
   { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: '5990', stock: '15', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
   { id: '2', name: 'WANBO Mini Projector', price: '3502', stock: '10', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
@@ -11,16 +11,16 @@ const INITIAL_PROJECTOR_DATA = [
   { id: '4', name: 'ACER Projector x 1328wi', price: '17390', stock: '15', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
   { id: '5', name: 'Epson Projector / EB-E24', price: '17790', stock: '25', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop' },
 ];
-
+ 
 export default function StockScreen() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
-
+ 
   // โหลดข้อมูลขึ้นมาใหม่ทุกครั้งที่หน้านี้ถูกเปิดใช้งาน
   useEffect(() => {
     loadProducts();
   }, []);
-
+ 
   const loadProducts = async () => {
     try {
       const storedData = await AsyncStorage.getItem('@lumen_products');
@@ -35,7 +35,7 @@ export default function StockScreen() {
       console.error(error);
     }
   };
-
+ 
   const deleteProduct = async (id: string) => {
     try {
       const updatedList = products.filter(item => item.id !== id);
@@ -45,7 +45,7 @@ export default function StockScreen() {
       console.error(error);
     }
   };
-
+ 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -57,7 +57,7 @@ export default function StockScreen() {
           <Ionicons name="add" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
-
+ 
       <View style={styles.contentBody}>
         <FlatList
           data={products}
@@ -67,10 +67,10 @@ export default function StockScreen() {
           renderItem={({ item }) => {
             const fallbackImg = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400';
             const imageUrl = item.image && item.image.trim() !== '' ? item.image : fallbackImg;
-
+ 
             return (
               <View style={styles.productCard}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.cardPressable}
                   onPress={() => router.push({
                     pathname: '/product-detail',
@@ -91,9 +91,9 @@ export default function StockScreen() {
                     <Text style={styles.productPrice}>{Number(item.price).toLocaleString()} บ.</Text>
                   </View>
                 </TouchableOpacity>
-
+ 
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.gearBtn}
                     onPress={() => router.push({ pathname: '/add-product', params: { editId: item.id } })}
                   >
@@ -111,7 +111,7 @@ export default function StockScreen() {
     </SafeAreaView>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0B0F19' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111827', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#1F2937' },
