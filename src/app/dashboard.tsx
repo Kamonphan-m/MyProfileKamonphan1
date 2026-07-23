@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -14,11 +14,12 @@ import {
 
 const { width } = Dimensions.get('window');
 
+// 📊 ปรับความสูงของกราฟ และเพิ่มตัวเลขยอดสินค้าด้านบนให้ดูน่ารักและอ่านง่ายขึ้นค่ะ
 const CHART_BARS = [
-  { h: 70, l: 'Ready' },
-  { h: 130, l: 'Holding' },
-  { h: 45, l: 'Faulty' },
-  { h: 150, l: 'Active' },
+  { h: 70, l: 'Ready', count: '2' },
+  { h: 110, l: 'Holding', count: '3' },
+  { h: 30, l: 'Faulty', count: '0' },
+  { h: 140, l: 'Active', count: '5' },
 ];
 
 export default function DashboardScreen() {
@@ -107,14 +108,14 @@ export default function DashboardScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Real-time Analytics</Text>
 
-        {/* ตารางการ์ดสถิติโทนสีพาสเทลเอิร์ธโทนสุดหรู */}
+        {/* 📊 ตารางสถิติปรับตัวเลขให้ตะมุตะมิ สมกับเป็นร้านเราจริง ๆ แล้วค่ะ */}
         <View style={styles.statsGrid}>
           {[
-            { value: '741', title: 'IN STOCK', color: '#6D8771' },
-            { value: '123', title: 'ORDERS', color: '#8D6E63' },
-            { value: '12', title: 'RETURNS', color: '#C25A5A' },
+            { value: '5', title: 'IN STOCK', color: '#6D8771' },
+            { value: '12', title: 'ORDERS', color: '#8D6E63' },
+            { value: '0', title: 'RETURNS', color: '#C25A5A' },
             { value: '1', title: 'ALERT', color: '#C6A15B' },
-            { value: '4', title: 'GROUPS', color: '#78909C' },
+            { value: '6', title: 'GROUPS', color: '#78909C' },
           ].map((stat, i) => (
             <View key={i} style={styles.statCard}>
               <Text style={[styles.statNumber, { color: stat.color }]}>{stat.value}</Text>
@@ -135,6 +136,7 @@ export default function DashboardScreen() {
           <View style={styles.chartRow}>
             {CHART_BARS.map((bar, idx) => (
               <View key={idx} style={styles.barWrapper}>
+                <Text style={styles.barValueText}>{bar.count}</Text>
                 <View style={[styles.bar, { height: bar.h }]} />
                 <Text style={styles.barLabel}>{bar.l}</Text>
               </View>
@@ -143,23 +145,26 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
-      {/* แถบเมนูด้านล่างสุดพรีเมียม เข้าเซ็ตกับหน้าอื่น */}
-      <View style={styles.navBar}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/dashboard')}>
-          <Ionicons name="grid" size={20} color="#4A3525" />
-          <Text style={[styles.navText, styles.navTextActive]}>Home</Text>
+      {/* ✨ 🦄 แถบเนวิเกชั่นด้านล่างดีไซน์มินิมอลลอยตัวสุดคิ้วท์ (แมตช์เข้าคู่กันครบทุกหน้าแล้วค่ะ) */}
+      <View style={styles.bottomTabBar}>
+        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
+          <Ionicons name="grid" size={22} color="#4A3525" />
+          <Text style={[styles.tabText, styles.activeTabText]}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/add-product')}>
-          <Ionicons name="add-circle-outline" size={20} color="#A19288" />
-          <Text style={styles.navText}>Add</Text>
+
+        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/add-product')}>
+          <Ionicons name="add-circle-outline" size={22} color="#8A7A71" />
+          <Text style={styles.tabText}>Add</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stock')}>
-          <MaterialCommunityIcons name="cube-outline" size={20} color="#A19288" />
-          <Text style={styles.navText}>Products</Text>
+
+        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/stock')}>
+          <Ionicons name="cube-outline" size={22} color="#8A7A71" />
+          <Text style={styles.tabText}>Products</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/categories')}>
-          <Ionicons name="folder-open-outline" size={20} color="#A19288" />
-          <Text style={styles.navText}>Categories</Text>
+
+        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/categories')}>
+          <Ionicons name="grid-outline" size={22} color="#8A7A71" />
+          <Text style={styles.tabText}>Categories</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -168,7 +173,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F4F0' },
-  scrollContainer: { padding: 20, paddingBottom: 120 },
+  scrollContainer: { padding: 20, paddingBottom: 140 }, // เพิ่มพื้นที่ดันด้านล่างขึ้น ไม่ให้เมนูลอยบังความสวยของกราฟค่ะ
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -264,26 +269,32 @@ const styles = StyleSheet.create({
   barWrapper: { alignItems: 'center', flex: 1, justifyContent: 'flex-end' },
   bar: { backgroundColor: '#8D6E63', width: 18, borderRadius: 10 },
   barLabel: { fontSize: 10, color: '#A19288', marginTop: 8, fontWeight: '600' },
+  barValueText: { fontSize: 10, fontWeight: '700', color: '#8D6E63', marginBottom: 4 },
   
-  // แถบเมนูด้านล่าง
-  navBar: {
+  /* 🎨 ดีไซน์เมนูด้านล่างแบบลอยตัวละมุนใจสไตล์ Cozy Cafe */
+  bottomTabBar: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 72,
-    backgroundColor: '#FFF',
+    bottom: 25,
+    left: 20,
+    right: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    height: 70,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#EDE9E2',
-    paddingBottom: 8,
-    zIndex: 10,
+    shadowColor: '#3E2723',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#EDE9E2',
+    zIndex: 10
   },
-  navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-  navText: { fontSize: 10, color: '#A19288', marginTop: 4, fontWeight: '600' },
-  navTextActive: { color: '#4A3525', fontWeight: '800' },
+  tabItem: { alignItems: 'center', justifyContent: 'center', width: 65, height: 50 },
+  tabText: { fontSize: 10, color: '#A19288', fontWeight: '600', marginTop: 4 },
+  activeTabText: { color: '#4A3525', fontWeight: '800' },
   
   // เมนูด้านข้างเมื่อกดเปิด (Sidebar Drawer)
   sidebar: {
