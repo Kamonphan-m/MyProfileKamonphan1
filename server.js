@@ -22,7 +22,7 @@ app.get('/api/products', (req, res) => {
       price: 5990,
       stock: 5,
       category: 'Projector',
-      image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop'
+      image: 'https://e-express.co.th/wp-content/uploads/2025/04/p1-1.webp'
     },
     {
       id: 2,
@@ -30,7 +30,7 @@ app.get('/api/products', (req, res) => {
       price: 3502,
       stock: 10,
       category: 'Projector',
-      image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop'
+      image: 'https://www.gtoengineer.com/wp-content/uploads/2025/03/2023011616162157355_1.webp'
     },
     {
       id: 3,
@@ -38,7 +38,7 @@ app.get('/api/products', (req, res) => {
       price: 17590,
       stock: 15,
       category: 'Projector',
-      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop'
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzmaN2pdHvbH1EvXrMiRyOEG4KQsx1v0i1PBmBgl9ulxR2RonnlcZWGRXK&s=10'
     }
   ]);
 });
