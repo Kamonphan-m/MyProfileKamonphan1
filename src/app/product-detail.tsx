@@ -1,99 +1,82 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
 export default function ProductDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [product, setProduct] = useState<any>({ id: '', name: '', price: '0', stock: '0', image: '' });
 
-  useEffect(() => {
-    loadLiveDetails();
-  }, [params.id]);
-
-  const loadLiveDetails = async () => {
-    try {
-      const storedData = await AsyncStorage.getItem('@lumen_products');
-      if (storedData) {
-        const products = JSON.parse(storedData);
-        const currentItem = products.find((p: any) => p.id === params.id);
-        if (currentItem) {
-          setProduct(currentItem);
-        } else {
-          setProduct({
-            id: params.id || '',
-            name: params.name || '',
-            price: params.price || '0',
-            stock: params.stock || '0',
-            image: params.image || ''
-          });
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const displayImage = product.image && product.image.trim() !== '' ? product.image : 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop';
-  
-  // 🔗 ดึงข้อมูลสินค้าทำเป็น JSON String เพื่อสร้าง QR
-  const qrDataString = JSON.stringify({ id: product.id, name: product.name, price: product.price, stock: product.stock });
-  
-  // 🌐 ใช้บริการสร้าง QR Code ออนไลน์ฟรี (ทำให้แอปไม่ต้องลง Library เสริมให้พังอีกต่อไป!)
-  const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=0b0f19&data=${encodeURIComponent(qrDataString)}`;
+  // ดึงข้อมูลที่ส่งมาจาก Query Parameters (URL)
+  const name = (params.name as string) || 'Projector Details';
+  const price = params.price ? Number(params.price).toLocaleString() : '0';
+  const stock = params.stock || '0';
+  const image = (params.image as string) || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop';
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 🤎 Header ธีมน้ำตาล-ครีม มินิมอล */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.navBtn}>
-          <Ionicons name="chevron-back" size={22} color="#6366F1" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color="#4A3525" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>TERMINAL DETAILS</Text>
-        <View style={{ width: 40 }} />
+
+        <View style={styles.brandTitleContainer}>
+          <Text style={styles.headerTitle}>PROJECTOR DETAILS</Text>
+          <Text style={styles.subBrandTitle}>LUMEN PROJECTOR MANAGEMENT</Text>
+        </View>
+
+        <View style={{ width: 36 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.detailCard}>
-          <View style={styles.imageWrapper}>
-            <Image source={{ uri: displayImage }} style={styles.productImage} resizeMode="cover" />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* 🖼️ แสดงรูปภาพโปรเจกเตอร์จริง */}
+        <View style={styles.imageCard}>
+          <Image
+            source={{ uri: image }}
+            style={styles.productImage}
+            resizeMode="cover"
+          />
+        </View>
+
+        {/* 📝 รายละเอียดสินค้าจริง */}
+        <View style={styles.infoCard}>
+          <Text style={styles.productName}>{name}</Text>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Price:</Text>
+            <Text style={styles.priceValue}>฿{price}</Text>
           </View>
 
-          <Text style={styles.productName}>{product.name}</Text>
-
-          <View style={styles.infoTable}>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>Price:</Text>
-              <Text style={styles.tableValue}>{Number(product.price).toLocaleString()} บ.</Text>
-            </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>Stock status:</Text>
-              <Text style={[styles.tableValue, { color: Number(product.stock) > 0 ? '#10B981' : '#EF4444' }]}>
-                {product.stock} Units
-              </Text>
-            </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Stock status:</Text>
+            <Text style={styles.stockValue}>{stock} Units</Text>
           </View>
 
-          <TouchableOpacity 
-            style={styles.editButton} 
-            onPress={() => router.push({ pathname: '/add-product', params: { editId: product.id } })}
-          >
-            <Ionicons name="build-outline" size={16} color="#FFF" style={{ marginRight: 8 }} />
-            <Text style={styles.editButtonText}>Modify Hardware Configuration</Text>
+          <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
+            <Ionicons name="build-outline" size={16} color="#FFF" style={{ marginRight: 6 }} />
+            <Text style={styles.actionButtonText}>Modify Hardware Configuration</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ส่วนแสดง QR Code ด้วย API รูปภาพ */}
-        <View style={styles.qrContainer}>
+        {/* 🔳 QR Code สินค้า */}
+        <View style={styles.qrCard}>
           <Text style={styles.qrTitle}>Product QR Code Matrix</Text>
-          <View style={styles.qrWrapper}>
-            <Image 
-              source={{ uri: qrCodeApiUrl }} 
-              style={{ width: 140, height: 140 }} 
-              resizeMode="contain"
-            />
-          </View>
+          <Image
+            source={{
+              uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(name)}`
+            }}
+            style={styles.qrImage}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -101,22 +84,117 @@ export default function ProductDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0B0F19' },
-  scrollContainer: { padding: 20, paddingBottom: 40 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111827', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#1F2937' },
-  headerTitle: { fontSize: 13, fontWeight: '900', color: '#FFF', letterSpacing: 2 },
-  navBtn: { backgroundColor: '#1E293B', padding: 8, borderRadius: 10 },
-  detailCard: { backgroundColor: '#151F32', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#1E293B', marginBottom: 20 },
-  imageWrapper: { width: '100%', height: 220, borderRadius: 16, overflow: 'hidden', backgroundColor: '#1E293B', marginBottom: 20 },
-  productImage: { width: '100%', height: '100%' },
-  productName: { fontSize: 18, fontWeight: 'bold', color: '#FFF', marginBottom: 20 },
-  infoTable: { borderTopWidth: 1, borderTopColor: '#1F2937', paddingTop: 10 },
-  tableRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#1F2937' },
-  tableLabel: { fontSize: 13, color: '#9CA3AF' },
-  tableValue: { fontSize: 13, color: '#FFF', fontWeight: 'bold' },
-  editButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#6366F1', paddingVertical: 14, borderRadius: 14, marginTop: 24 },
-  editButtonText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
-  qrContainer: { backgroundColor: '#151F32', borderRadius: 24, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: '#1E293B' },
-  qrTitle: { fontSize: 12, fontWeight: '800', color: '#6366F1', marginBottom: 16 },
-  qrWrapper: { backgroundColor: '#FFF', padding: 16, borderRadius: 20 }
+  container: { flex: 1, backgroundColor: '#F7F4F0' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDE9E2',
+  },
+  backBtn: {
+    backgroundColor: '#F5F2EC',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  brandTitleContainer: { alignItems: 'center' },
+  headerTitle: { fontSize: 14, fontWeight: '900', color: '#3E2723', letterSpacing: 1.2 },
+  subBrandTitle: { fontSize: 8, fontWeight: '700', color: '#A19288', letterSpacing: 0.8, marginTop: 2 },
+
+  scrollContent: { padding: 16, paddingBottom: 40 },
+  
+  imageCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#EDE9E2',
+    marginBottom: 14,
+    elevation: 2,
+    shadowColor: '#3E2723',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+  },
+  productImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#F5F2EC',
+  },
+
+  infoCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#EDE9E2',
+    marginBottom: 14,
+    elevation: 2,
+    shadowColor: '#3E2723',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+  },
+  productName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#3E2723',
+    marginBottom: 12,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F5F2EC',
+    marginBottom: 12,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  label: { fontSize: 13, color: '#8A7A71', fontWeight: '500' },
+  priceValue: { fontSize: 15, fontWeight: '800', color: '#3E2723' },
+  stockValue: { fontSize: 13, fontWeight: '700', color: '#6D8771' },
+
+  actionButton: {
+    backgroundColor: '#4A3525',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 10,
+  },
+  actionButtonText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
+
+  qrCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EDE9E2',
+    elevation: 2,
+    shadowColor: '#3E2723',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+  },
+  qrTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#8A7A71',
+    marginBottom: 14,
+  },
+  qrImage: {
+    width: 140,
+    height: 140,
+    borderRadius: 12,
+  },
 });
