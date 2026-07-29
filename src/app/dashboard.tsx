@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 12,
-    justify: 'center',
+   justifyContent: 'space-between',
     alignItems: 'center',
   },
   avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 11 },
