@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  Image, // 👈 เพิ่ม Image สำหรับโชว์รูปภาพสินค้า
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -171,7 +172,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* 🔹 3. แสดงรายการสินค้าที่ดึงมาจาก Express Backend */}
+        {/* 🔹 3. แสดงรายการสินค้าพร้อมรูปภาพที่ดึงมาจาก Express Backend */}
         <Text style={styles.sectionTitle}>Live Products API Data</Text>
         <View style={styles.productListContainer}>
           {loading ? (
@@ -179,10 +180,19 @@ export default function DashboardScreen() {
           ) : products.length > 0 ? (
             products.map((item, index) => (
               <View key={item.id || index} style={styles.productCard}>
-                <View>
+                {/* 🖼️ แสดงรูปภาพสินค้า (ถ้าระบบยังไม่ส่งรูปมา จะใช้รูปภาพตัวอย่างรองรับให้อัตโนมัติค่ะ) */}
+                <Image
+                  source={{
+                    uri: item.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop'
+                  }}
+                  style={styles.productImage}
+                />
+
+                <View style={{ flex: 1 }}>
                   <Text style={styles.productName}>{item.name}</Text>
                   <Text style={styles.productPrice}>฿{item.price}</Text>
                 </View>
+
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>ID: {item.id}</Text>
                 </View>
@@ -226,7 +236,7 @@ const styles = StyleSheet.create({
   scrollContainer: { padding: 20, paddingBottom: 140 },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+   justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFF',
     paddingHorizontal: 20,
@@ -241,7 +251,7 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 12,
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
   },
   avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 11 },
@@ -283,7 +293,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F2EC',
     width: '31%',
     borderRadius: 20,
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
@@ -310,7 +320,7 @@ const styles = StyleSheet.create({
   },
   chartRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justify: 'space-around',
     alignItems: 'flex-end',
     flex: 1,
   },
@@ -319,18 +329,24 @@ const styles = StyleSheet.create({
   barLabel: { fontSize: 10, color: '#A19288', marginTop: 8, fontWeight: '600' },
   barValueText: { fontSize: 10, fontWeight: '700', color: '#8D6E63', marginBottom: 4 },
   
-  // 🛍️ สไตล์ของรายการสินค้าที่ดึงมาจาก API
+  // 🛍️ สไตล์ของรายการสินค้าและรูปภาพ
   productListContainer: { marginTop: 4 },
   productCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     marginBottom: 10,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#EDE9E2',
+  },
+  productImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    marginRight: 12,
+    backgroundColor: '#F5F2EC',
   },
   productName: { fontSize: 14, fontWeight: '700', color: '#3E2723' },
   productPrice: { fontSize: 13, color: '#8D6E63', marginTop: 2, fontWeight: '600' },
@@ -347,7 +363,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 70,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justify: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 8 },
@@ -377,7 +393,7 @@ const styles = StyleSheet.create({
   },
   sidebarHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'center',
     paddingBottom: 20,
     borderBottomWidth: 1,
