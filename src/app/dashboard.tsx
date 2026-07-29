@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F2EC',
     width: '31%',
     borderRadius: 20,
-    justify: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   chartRow: {
     flexDirection: 'row',
-    justify: 'space-around',
+   justifyContent: 'space-between',
     alignItems: 'flex-end',
     flex: 1,
   },
