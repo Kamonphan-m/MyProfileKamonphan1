@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   SafeAreaView,
@@ -9,12 +10,15 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
-// 📊 ปรับความสูงของกราฟ และเพิ่มตัวเลขยอดสินค้าด้านบนให้ดูน่ารักและอ่านง่ายขึ้นค่ะ
+// 🌐 1. กำหนด Base URL ของเซิร์ฟเวอร์ Cloud Express
+const API_BASE_URL = 'http://119.59.102.161:3005/api';
+
+// 📊 กราฟจำลอง
 const CHART_BARS = [
   { h: 70, l: 'Ready', count: '2' },
   { h: 110, l: 'Holding', count: '3' },
@@ -27,6 +31,29 @@ export default function DashboardScreen() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarAnim] = useState(new Animated.Value(-width * 0.75));
 
+  // 📦 State สำหรับเก็บข้อมูลจาก Backend
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 🔹 2. ฟังก์ชันดึงข้อมูลจาก Backend API
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/products`);
+      const data = await response.json();
+      console.log("Data from backend:", data);
+      setProducts(data);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   const toggleMenu = () => {
     Animated.timing(sidebarAnim, {
       toValue: isMenuOpen ? -width * 0.75 : 0,
@@ -38,7 +65,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ส่วนแถบเมนูด้านข้าง (Sidebar) สไตล์มินิมอลอบอุ่น */}
+      {/* ส่วนแถบเมนูด้านข้าง (Sidebar) */}
       <Animated.View style={[styles.sidebar, { left: sidebarAnim }]}>
         <View style={styles.sidebarHeader}>
           <Text style={styles.sidebarLogo}>
@@ -94,7 +121,7 @@ export default function DashboardScreen() {
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={toggleMenu} />
       )}
 
-      {/* Header หลักด้านบนสุดละมุน */}
+      {/* Header หลักด้านบน */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu} style={styles.menuTrigger}>
           <Ionicons name="menu-outline" size={22} color="#4A3525" />
@@ -108,10 +135,10 @@ export default function DashboardScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Real-time Analytics</Text>
 
-        {/* 📊 ตารางสถิติปรับตัวเลขให้ตะมุตะมิ สมกับเป็นร้านเราจริง ๆ แล้วค่ะ */}
+        {/* 📊 ตารางสถิติ (นับ IN STOCK จริงจาก Backend API) */}
         <View style={styles.statsGrid}>
           {[
-            { value: '5', title: 'IN STOCK', color: '#6D8771' },
+            { value: products.length.toString(), title: 'IN STOCK', color: '#6D8771' },
             { value: '12', title: 'ORDERS', color: '#8D6E63' },
             { value: '0', title: 'RETURNS', color: '#C25A5A' },
             { value: '1', title: 'ALERT', color: '#C6A15B' },
@@ -131,7 +158,7 @@ export default function DashboardScreen() {
 
         <Text style={styles.sectionTitle}>Performance Metrics</Text>
         
-        {/* กล่องกราฟดีไซน์สะอาดตา */}
+        {/* กล่องกราฟ */}
         <View style={styles.chartContainer}>
           <View style={styles.chartRow}>
             {CHART_BARS.map((bar, idx) => (
@@ -143,9 +170,32 @@ export default function DashboardScreen() {
             ))}
           </View>
         </View>
+
+        {/* 🔹 3. แสดงรายการสินค้าที่ดึงมาจาก Express Backend */}
+        <Text style={styles.sectionTitle}>Live Products API Data</Text>
+        <View style={styles.productListContainer}>
+          {loading ? (
+            <ActivityIndicator size="small" color="#4A3525" />
+          ) : products.length > 0 ? (
+            products.map((item, index) => (
+              <View key={item.id || index} style={styles.productCard}>
+                <View>
+                  <Text style={styles.productName}>{item.name}</Text>
+                  <Text style={styles.productPrice}>฿{item.price}</Text>
+                </View>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>ID: {item.id}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noDataText}>ไม่พบข้อมูลสินค้า</Text>
+          )}
+        </View>
+
       </ScrollView>
 
-      {/* ✨ 🦄 แถบเนวิเกชั่นด้านล่างดีไซน์มินิมอลลอยตัวสุดคิ้วท์ (แมตช์เข้าคู่กันครบทุกหน้าแล้วค่ะ) */}
+      {/* แถบเนวิเกชั่นด้านล่าง */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="grid" size={22} color="#4A3525" />
@@ -173,7 +223,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F4F0' },
-  scrollContainer: { padding: 20, paddingBottom: 140 }, // เพิ่มพื้นที่ดันด้านล่างขึ้น ไม่ให้เมนูลอยบังความสวยของกราฟค่ะ
+  scrollContainer: { padding: 20, paddingBottom: 140 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -207,7 +257,6 @@ const styles = StyleSheet.create({
   },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   
-  // การ์ดสถิติสีขาว มนโค้ง ละมุนตา
   statCard: {
     backgroundColor: '#FFF',
     width: '31%',
@@ -248,7 +297,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   
-  // ส่วนกล่องแสดงผลกราฟ
   chartContainer: {
     backgroundColor: '#FFF',
     borderRadius: 24,
@@ -271,7 +319,25 @@ const styles = StyleSheet.create({
   barLabel: { fontSize: 10, color: '#A19288', marginTop: 8, fontWeight: '600' },
   barValueText: { fontSize: 10, fontWeight: '700', color: '#8D6E63', marginBottom: 4 },
   
-  /* 🎨 ดีไซน์เมนูด้านล่างแบบลอยตัวละมุนใจสไตล์ Cozy Cafe */
+  // 🛍️ สไตล์ของรายการสินค้าที่ดึงมาจาก API
+  productListContainer: { marginTop: 4 },
+  productCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EDE9E2',
+  },
+  productName: { fontSize: 14, fontWeight: '700', color: '#3E2723' },
+  productPrice: { fontSize: 13, color: '#8D6E63', marginTop: 2, fontWeight: '600' },
+  badge: { backgroundColor: '#F5F2EC', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  badgeText: { fontSize: 11, fontWeight: '700', color: '#8A7A71' },
+  noDataText: { textAlign: 'center', color: '#A19288', marginTop: 10 },
+
   bottomTabBar: {
     position: 'absolute',
     bottom: 25,
@@ -296,7 +362,6 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 10, color: '#A19288', fontWeight: '600', marginTop: 4 },
   activeTabText: { color: '#4A3525', fontWeight: '800' },
   
-  // เมนูด้านข้างเมื่อกดเปิด (Sidebar Drawer)
   sidebar: {
     position: 'absolute',
     top: 0,
