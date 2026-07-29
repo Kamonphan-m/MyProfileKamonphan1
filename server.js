@@ -57,7 +57,7 @@ app.get('/api/products', (req, res) => {
       image: 'https://www.smartmediaprojector.com/uploads/6426/shop/202604/202604-27-142331_Wz-0.png'
     },
     {
-      id: 5,
+      id: 6,
       name: 'Xiaomi Mi Smart Projector 2 Pro',
       price: 23999,
       stock: 10,
