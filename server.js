@@ -13,7 +13,7 @@ app.use(express.json());
 // 1. ตั้งค่าการเชื่อมต่อฐานข้อมูล MySQL
 // ==========================================
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || '119.59.120.161',
+  host: process.env.DB_HOST || '119.59.102.161',
   user: process.env.DB_USER || 'std6730202009',
   password: process.env.DB_PASSWORD || 'X2$kfHr1',
   database: process.env.DB_NAME || 'ip_std6730202009', // ชื่อ DB ของหนู
