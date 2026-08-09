@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise'); // เพิ่มการดึงใช้งาน mysql2
+const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 const app = express();
@@ -16,7 +16,7 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST || '119.59.102.161',
   user: process.env.DB_USER || 'std6730202009',
   password: process.env.DB_PASSWORD || 'X2$kfHr1',
-  database: process.env.DB_NAME || 'ip_std6730202009', // ชื่อ DB ของหนู
+  database: process.env.DB_NAME || 'ip_std6730202009',
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
@@ -24,16 +24,17 @@ const pool = mysql.createPool({
   timezone: "+07:00"
 });
 
-const PRODUCTS_TABLE = 'inventory'; // ชื่อตารางสินค้าใน phpMyAdmin
+const PRODUCTS_TABLE = 'inventory';
 
 // ทดสอบการเชื่อมต่อฐานข้อมูลเมื่อรัน Server
 (async function testMySQL() {
   try {
     const conn = await pool.getConnection();
-    console.log('Connected to MySQL Database:', process.env.DB_NAME || 'ip_std6730202009');
+    console.log('✅ Connected to MySQL Database:', process.env.DB_NAME || 'ip_std6730202009');
     conn.release();
   } catch (err) {
-    console.error('MySQL Connection Failed:', err.message);
+    console.error('❌ MySQL Connection Failed Reason:', err.message);
+    console.error('รายละเอียดเพิ่มเติม:', err.code);
   }
 })();
 
@@ -49,7 +50,6 @@ app.get('/', (req, res) => {
 // ==========================================
 app.get('/api/products', async (req, res) => {
   try {
-    // ดึงข้อมูลสินค้าทั้งหมดจากตาราง inventory
     const [rows] = await pool.query(`SELECT * FROM ${PRODUCTS_TABLE}`);
     res.json(rows);
   } catch (error) {
@@ -65,12 +65,10 @@ app.post('/api/products', async (req, res) => {
   try {
     const { name, price, stock, category, image, status } = req.body;
 
-    // ตรวจสอบว่าใส่ชื่อโปรเจกเตอร์มาหรือไม่
     if (!name) {
       return res.status(400).json({ error: 'กรุณากรอกชื่อโปรเจกเตอร์ (Name is required)' });
     }
 
-    // คำสั่ง SQL เพิ่มข้อมูลให้ตรงกับคอลัมน์ใน phpMyAdmin ของหนู
     const sql = `
       INSERT INTO ${PRODUCTS_TABLE} 
       (name, price, stock, category, image, status, lastUpdate) 
@@ -83,7 +81,7 @@ app.post('/api/products', async (req, res) => {
       stock || 0,
       category || 'Projector',
       image || null,
-      status || 'Active'
+      status || 'Available'
     ]);
 
     return res.status(201).json({
@@ -102,5 +100,5 @@ app.post('/api/products', async (req, res) => {
 // 5. สั่งรัน Server (ไว้ล่างสุดเสมอ)
 // ==========================================
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
