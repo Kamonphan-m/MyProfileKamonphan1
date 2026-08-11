@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
- 
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
 const PRODUCTS_URL =
   'https://raw.githubusercontent.com/Kamonphan-m/MyProfileKamonphan1/master/products.json';
- 
+
 const INITIAL_PROJECTOR_DATA = [
   { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: '5990', stock: '5', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400' },
   { id: '2', name: 'WANBO Mini Projector', price: '3502', stock: '10', image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=400' },
@@ -14,15 +14,16 @@ const INITIAL_PROJECTOR_DATA = [
   { id: '4', name: 'ACER Projector x 1328Wi', price: '17390', stock: '15', image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400' },
   { id: '5', name: 'Epson Projector / EB-E24', price: '17790', stock: '25', image: 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=400' }
 ];
- 
+
 export default function StockScreen() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
- 
+  const [searchQuery, setSearchQuery] = useState(''); // State สำหรับช่อง Search
+
   // 🔴 โค้ดส่วนที่ต้องแคปส่งอาจารย์ (บรรทัดที่ 22 - 44) ยังอยู่ครบและไม่ซ้ำเพื่อนค่ะ
   useEffect(() => {
     const apiController = new AbortController();
- 
+
     const fetchOnlineData = async () => {
       try {
         const localCache = await AsyncStorage.getItem('@lumen_products');
@@ -31,7 +32,7 @@ export default function StockScreen() {
         } else {
           setProducts(INITIAL_PROJECTOR_DATA);
         }
- 
+
         const res = await fetch(PRODUCTS_URL, { signal: apiController.signal });
         if (!res.ok) throw new Error('Fetch status error');
         
@@ -40,11 +41,12 @@ export default function StockScreen() {
         console.log('Fetch handled gracefully');
       }
     };
- 
+
     void fetchOnlineData();
     return () => apiController.abort();
   }, []);
- 
+
+  // ฟังก์ชันลบสินค้า (Delete)
   const deleteProduct = async (id: string) => {
     try {
       const updatedList = products.filter(item => item.id !== id);
@@ -54,10 +56,15 @@ export default function StockScreen() {
       console.error(error);
     }
   };
- 
+
+  // ฟังก์ชันกรองค้นหาสินค้า (Search Filter)
+  const filteredProducts = products.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* ส่วนหัวแอปสไตล์คลีนหรู */}
+      {/* ส่วนหัวแอป */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.navBtn}>
           <Ionicons name="chevron-back" size={22} color="#4A3525" />
@@ -70,19 +77,38 @@ export default function StockScreen() {
           <Ionicons name="add" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
- 
+
       <View style={styles.contentBody}>
-        <Text style={styles.sectionTitle}>All Products ({products.length})</Text>
+        {/* 🔍 ช่องค้นหาสินค้า (Search Bar สำหรับข้อ 5) */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search-outline" size={18} color="#8A7A71" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search projectors..."
+            placeholderTextColor="#A19288"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color="#8A7A71" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <Text style={styles.sectionTitle}>
+          All Products ({filteredProducts.length})
+        </Text>
         
         <FlatList
-          data={products}
-          keyExtractor={(item) => item.id}
+          data={filteredProducts}
+          keyExtractor={(item) => String(item.id)}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 140 }} // ปรับเพิ่มระยะด้านล่างขึ้นนิดนึง เพื่อไม่ให้แถบเมนูบังการ์ดสินค้าอันสุดท้ายค่ะ
+          contentContainerStyle={{ paddingBottom: 140 }}
           renderItem={({ item }) => {
             const fallbackImg = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400';
             const imageUrl = item.image && item.image.trim() !== '' ? item.image : fallbackImg;
- 
+
             return (
               <View style={styles.productCard}>
                 <TouchableOpacity
@@ -99,7 +125,6 @@ export default function StockScreen() {
                     <View style={styles.metaRow}>
                       <Text style={styles.productPrice}>THB {Number(item.price).toLocaleString()}</Text>
                       
-                      {/* บาร์บอกสถานะน่ารักๆ */}
                       <View style={[styles.badge, { backgroundColor: Number(item.stock) > 0 ? '#E8F5E9' : '#FFEBEE' }]}>
                         <Text style={[styles.badgeText, { color: Number(item.stock) > 0 ? '#2E7D32' : '#C62828' }]}>
                           {Number(item.stock) > 0 ? 'Available' : 'Low Stock'}
@@ -109,8 +134,8 @@ export default function StockScreen() {
                     <Text style={styles.qtyText}>Stock: {item.stock} Units</Text>
                   </View>
                 </TouchableOpacity>
- 
-                {/* ปุ่มจัดการดีไซน์มินิมอลน้ำตาลหรู */}
+
+                {/* ปุ่ม Edit & Delete */}
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
                     style={styles.gearBtn}
@@ -128,7 +153,7 @@ export default function StockScreen() {
         />
       </View>
 
-      {/* ✨ 🦄 แถบเนวิเกชั่นด้านล่างดีไซน์มินิมอลเกาหลีสุดน่ารัก */}
+      {/* แถบเนวิเกชั่นด้านล่าง */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="home-outline" size={22} color="#8A7A71" />
@@ -153,9 +178,8 @@ export default function StockScreen() {
     </SafeAreaView>
   );
 }
- 
+
 const styles = StyleSheet.create({
-  // พื้นหลังสีครีมนวลหรูหราแบบ Cozy มินิมอล
   container: { flex: 1, backgroundColor: '#F7F4F0' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EDE9E2' },
   headerTitleContainer: { alignItems: 'center' },
@@ -163,11 +187,25 @@ const styles = StyleSheet.create({
   headerSubtitle: { fontSize: 10, color: '#8A7A71', marginTop: 2 },
   navBtn: { backgroundColor: '#F0EBE3', padding: 8, borderRadius: 12 },
   addHeaderBtn: { backgroundColor: '#4A3525', padding: 8, borderRadius: 12 },
- 
+
   contentBody: { flex: 1, paddingHorizontal: 20, paddingTop: 15 },
+  
+  /* ช่อง Search */
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#EDE9E2',
+  },
+  searchInput: { flex: 1, fontSize: 13, color: '#3E2723' },
+
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#4A3525', marginBottom: 15 },
- 
-  // การ์ดสินค้าสีขาว มนโค้ง มีเงาจางๆ ดูแพง
+
   productCard: { backgroundColor: '#FFF', borderRadius: 20, flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 14, justifyContent: 'space-between', shadowColor: '#3E2723', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   cardPressable: { flexDirection: 'row', flex: 1, alignItems: 'center' },
   productImage: { width: 65, height: 65, borderRadius: 16, backgroundColor: '#F5F5F5', marginRight: 15 },
@@ -175,16 +213,15 @@ const styles = StyleSheet.create({
   productName: { fontSize: 14, fontWeight: '700', color: '#3E2723', marginBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   productPrice: { fontSize: 13, color: '#8D6E63', fontWeight: '800' },
- 
+
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   badgeText: { fontSize: 9, fontWeight: '700' },
   qtyText: { fontSize: 11, color: '#A19288' },
- 
+
   actionButtons: { flexDirection: 'row', alignItems: 'center', marginLeft: 10 },
   gearBtn: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#F5F2EC', justifyContent: 'center', alignItems: 'center', marginRight: 8 },
   deleteBtn: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#FFEBEE', justifyContent: 'center', alignItems: 'center' },
 
-  /* 🎨 ดีไซน์เมนูด้านล่างแบบลอยตัวละมุนใจ */
   bottomTabBar: {
     position: 'absolute',
     bottom: 25,
@@ -194,7 +231,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 70,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justify: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 8 },
