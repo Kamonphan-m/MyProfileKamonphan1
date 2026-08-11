@@ -14,45 +14,51 @@ import {
   View
 } from 'react-native';
 
+// 📂 1. ดึงข้อมูลสินค้าจากไฟล์ products.json ในโปรเจกต์โดยตรง
+import localProductsData from '../../products.json';
+
 const { width } = Dimensions.get('window');
 
 // 🌐 Base URL เซิร์ฟเวอร์
 const API_BASE_URL = 'http://119.59.102.161:3005/api';
 
-// 📦 ข้อมูลสำรอง (Mock Data) ตรงตามโครงสร้าง products.json ของคุณ
+// 📦 ข้อมูลสำรอง (Mock Data) ตรงตามรูปภาพของหนูเป๊ะๆ
 const LOCAL_MOCK_PRODUCTS = [
   {
     id: "1",
-    name: "Smart Mini Projector 4K",
-    stock: 15,
-    stock_text: "15 in stock",
-    category: "Projectors",
-    location_count: 3,
-    location_text: "3 stores",
-    badge_status: "Active",
-    image_url: "https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop"
+    name: "WANBO X2 Max Smart Android Projector",
+    price: "5990",
+    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
   },
   {
     id: "2",
-    name: "Home Cinema Theater Projector",
-    stock: 8,
-    stock_text: "8 in stock",
-    category: "Projectors",
-    location_count: 2,
-    location_text: "2 stores",
-    badge_status: "Active",
-    image_url: "https://images.unsplash.com/photo-1601944179066-297bff591b3e?q=80&w=600&auto=format&fit=crop"
+    name: "WANBO Mini Projector",
+    price: "3502",
+    image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop"
   },
   {
     id: "3",
-    name: "Ultra Portable Pocket Projector",
-    stock: 1,
-    stock_text: "1 in stock",
-    category: "Projectors",
-    location_count: 1,
-    location_text: "1 stores",
-    badge_status: "Low in stock",
-    image_url: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600&auto=format&fit=crop"
+    name: "WANBO Projector Android 9.0 / Mozart",
+    price: "17590",
+    image: "https://images.unsplash.com/photo-1601944179066-297bff591b3e?w=500&auto=format&fit=crop"
+  },
+  {
+    id: "4",
+    name: "ACER ACER Projector x 1328wi",
+    price: "17390",
+    image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=500&auto=format&fit=crop"
+  },
+  {
+    id: "5",
+    name: "Epson EPSON Projector / EB-E24",
+    price: "17790",
+    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
+  },
+  {
+    id: "6",
+    name: "Xiaomi Mi Smart Projector 2 Pro",
+    price: "23999",
+    image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop"
   }
 ];
 
@@ -83,12 +89,13 @@ export default function DashboardScreen() {
       if (Array.isArray(data) && data.length > 0) {
         setProducts(data);
       } else {
-        setProducts(LOCAL_MOCK_PRODUCTS);
+        // ใช้ไฟล์ products.json หรือ MOCK หาก API ไม่มีข้อมูล
+        setProducts(localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS);
       }
     } catch (error) {
-      console.log("Fetch failed, fallback to local products.json structure");
-      // หากต่อ API เซิร์ฟเวอร์ไม่ได้ จะใช้ข้อมูลใน products.json แสดงแทนทันที
-      setProducts(LOCAL_MOCK_PRODUCTS);
+      console.log("Fetch failed, fallback to local products");
+      // ใช้ข้อมูล localProductsData จากไฟล์ json หรือ LOCAL_MOCK_PRODUCTS
+      setProducts(localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -213,39 +220,34 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* 🔹 แสดงรายการสินค้า (ปรับให้ตรงกับ products.json ของคุณเป๊ะๆ) */}
-        <Text style={styles.sectionTitle}>Live Products API Data</Text>
+        {/* 🔹 ส่วนแสดงผลสินค้า ปรับให้ตรงตามรูปภาพตัวอย่างเป๊ะๆ */}
+        <Text style={styles.sectionTitle}>LIVE PRODUCTS API DATA</Text>
         <View style={styles.productListContainer}>
           {loading ? (
             <ActivityIndicator size="small" color="#4A3525" />
           ) : products.length > 0 ? (
             products.map((item, index) => (
               <View key={item.id || index} style={styles.productCard}>
-                {/* 🖼️ ดึงจาก image_url */}
+                {/* 🖼️ รูปภาพสินค้า */}
                 <Image
                   source={{
-                    uri: item.image_url || item.image || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400'
+                    uri: item.image || item.image_url || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400'
                   }}
                   style={styles.productImage}
+                  resizeMode="contain"
                 />
 
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.productName}>{item.name}</Text>
-                  {/* 🏷️ ดึงจาก stock_text หรือ location_text */}
-                  <Text style={styles.productPrice}>{item.stock_text || `${item.stock} Units Available`}</Text>
+                {/* 📝 ชื่อสินค้า และ ราคา */}
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.productPrice}>
+                    {item.price ? `฿${item.price}` : item.stock_text || `${item.stock} Units Available`}
+                  </Text>
                 </View>
 
-                {/* 🟢 Badge แสดง badge_status */}
-                <View style={[
-                  styles.badge, 
-                  { backgroundColor: item.badge_status === 'Low in stock' ? '#FFEBEE' : '#E8F5E9' }
-                ]}>
-                  <Text style={[
-                    styles.badgeText, 
-                    { color: item.badge_status === 'Low in stock' ? '#C62828' : '#2E7D32' }
-                  ]}>
-                    {item.badge_status || `ID: ${item.id}`}
-                  </Text>
+                {/* 🏷️ ป้าย ID ฝั่งขวา */}
+                <View style={styles.idBadge}>
+                  <Text style={styles.idBadgeText}>ID: {item.id}</Text>
                 </View>
               </View>
             ))
@@ -392,16 +394,28 @@ const styles = StyleSheet.create({
     borderColor: '#EDE9E2',
   },
   productImage: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     borderRadius: 10,
     marginRight: 12,
-    backgroundColor: '#F5F2EC',
+    backgroundColor: '#FFF',
   },
-  productName: { fontSize: 14, fontWeight: '700', color: '#3E2723' },
-  productPrice: { fontSize: 12, color: '#8D6E63', marginTop: 2, fontWeight: '600' },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  badgeText: { fontSize: 10, fontWeight: '700' },
+  productName: { fontSize: 13, fontWeight: '700', color: '#3E2723' },
+  productPrice: { fontSize: 12, color: '#8D6E63', marginTop: 3, fontWeight: '700' },
+  
+  // 🏷️ สไตล์สำหรับป้าย ID ฝั่งขวาเหมือนในรูป
+  idBadge: {
+    backgroundColor: '#F5F2EC',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  idBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#8A7A71',
+  },
+
   noDataText: { textAlign: 'center', color: '#A19288', marginTop: 10 },
 
   bottomTabBar: {
