@@ -153,7 +153,7 @@ export default function StockScreen() {
         />
       </View>
 
-      {/* แถบเนวิเกชั่นด้านล่าง */}
+      {/* ✨ แถบเนวิเกชั่นด้านล่าง สไตล์เดียวกันทุกหน้า 100% */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="home-outline" size={22} color="#8A7A71" />
@@ -171,7 +171,7 @@ export default function StockScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/categories')}>
-          <Ionicons name="grid-outline" size={22} color="#8A7A71" />
+          <Ionicons name="grid" size={22} color="#8A7A71" />
           <Text style={styles.tabText}>Categories</Text>
         </TouchableOpacity>
       </View>
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 70,
     flexDirection: 'row',
-    justify: 'space-around',
+    justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 8 },
