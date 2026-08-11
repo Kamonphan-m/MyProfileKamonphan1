@@ -16,8 +16,45 @@ import {
 
 const { width } = Dimensions.get('window');
 
-// 🌐 1. กำหนด Base URL ของเซิร์ฟเวอร์ Cloud Express
+// 🌐 Base URL เซิร์ฟเวอร์
 const API_BASE_URL = 'http://119.59.102.161:3005/api';
+
+// 📦 ข้อมูลสำรอง (Mock Data) ตรงตามโครงสร้าง products.json ของคุณ
+const LOCAL_MOCK_PRODUCTS = [
+  {
+    id: "1",
+    name: "Smart Mini Projector 4K",
+    stock: 15,
+    stock_text: "15 in stock",
+    category: "Projectors",
+    location_count: 3,
+    location_text: "3 stores",
+    badge_status: "Active",
+    image_url: "https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600&auto=format&fit=crop"
+  },
+  {
+    id: "2",
+    name: "Home Cinema Theater Projector",
+    stock: 8,
+    stock_text: "8 in stock",
+    category: "Projectors",
+    location_count: 2,
+    location_text: "2 stores",
+    badge_status: "Active",
+    image_url: "https://images.unsplash.com/photo-1601944179066-297bff591b3e?q=80&w=600&auto=format&fit=crop"
+  },
+  {
+    id: "3",
+    name: "Ultra Portable Pocket Projector",
+    stock: 1,
+    stock_text: "1 in stock",
+    category: "Projectors",
+    location_count: 1,
+    location_text: "1 stores",
+    badge_status: "Low in stock",
+    image_url: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600&auto=format&fit=crop"
+  }
+];
 
 // 📊 กราฟจำลอง
 const CHART_BARS = [
@@ -32,20 +69,26 @@ export default function DashboardScreen() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarAnim] = useState(new Animated.Value(-width * 0.75));
 
-  // 📦 State สำหรับเก็บข้อมูลจาก Backend
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 2. ฟังก์ชันดึงข้อมูลจาก Backend API
+  // 🔹 ฟังก์ชันดึงข้อมูลแบบ Safety Fallback
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_BASE_URL}/products`);
+      if (!response.ok) throw new Error('API Response Error');
+      
       const data = await response.json();
-      console.log("Data from backend:", data);
-      setProducts(data);
+      if (Array.isArray(data) && data.length > 0) {
+        setProducts(data);
+      } else {
+        setProducts(LOCAL_MOCK_PRODUCTS);
+      }
     } catch (error) {
-      console.error("Fetch error:", error);
+      console.log("Fetch failed, fallback to local products.json structure");
+      // หากต่อ API เซิร์ฟเวอร์ไม่ได้ จะใช้ข้อมูลใน products.json แสดงแทนทันที
+      setProducts(LOCAL_MOCK_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -66,7 +109,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ส่วนแถบเมนูด้านข้าง (Sidebar) */}
+      {/* Sidebar เมนูด้านข้าง */}
       <Animated.View style={[styles.sidebar, { left: sidebarAnim }]}>
         <View style={styles.sidebarHeader}>
           <Text style={styles.sidebarLogo}>
@@ -122,7 +165,7 @@ export default function DashboardScreen() {
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={toggleMenu} />
       )}
 
-      {/* Header หลักด้านบน */}
+      {/* Header ด้านบน */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu} style={styles.menuTrigger}>
           <Ionicons name="menu-outline" size={22} color="#4A3525" />
@@ -136,7 +179,6 @@ export default function DashboardScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Real-time Analytics</Text>
 
-        {/* 📊 ตารางสถิติ */}
         <View style={styles.statsGrid}>
           {[
             { value: products.length.toString(), title: 'IN STOCK', color: '#6D8771' },
@@ -159,7 +201,6 @@ export default function DashboardScreen() {
 
         <Text style={styles.sectionTitle}>Performance Metrics</Text>
         
-        {/* กล่องกราฟ */}
         <View style={styles.chartContainer}>
           <View style={styles.chartRow}>
             {CHART_BARS.map((bar, idx) => (
@@ -172,7 +213,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* 🔹 3. แสดงรายการสินค้าพร้อมรูปภาพ */}
+        {/* 🔹 แสดงรายการสินค้า (ปรับให้ตรงกับ products.json ของคุณเป๊ะๆ) */}
         <Text style={styles.sectionTitle}>Live Products API Data</Text>
         <View style={styles.productListContainer}>
           {loading ? (
@@ -180,20 +221,31 @@ export default function DashboardScreen() {
           ) : products.length > 0 ? (
             products.map((item, index) => (
               <View key={item.id || index} style={styles.productCard}>
+                {/* 🖼️ ดึงจาก image_url */}
                 <Image
                   source={{
-                    uri: item.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop'
+                    uri: item.image_url || item.image || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400'
                   }}
                   style={styles.productImage}
                 />
 
                 <View style={{ flex: 1 }}>
                   <Text style={styles.productName}>{item.name}</Text>
-                  <Text style={styles.productPrice}>฿{item.price}</Text>
+                  {/* 🏷️ ดึงจาก stock_text หรือ location_text */}
+                  <Text style={styles.productPrice}>{item.stock_text || `${item.stock} Units Available`}</Text>
                 </View>
 
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>ID: {item.id}</Text>
+                {/* 🟢 Badge แสดง badge_status */}
+                <View style={[
+                  styles.badge, 
+                  { backgroundColor: item.badge_status === 'Low in stock' ? '#FFEBEE' : '#E8F5E9' }
+                ]}>
+                  <Text style={[
+                    styles.badgeText, 
+                    { color: item.badge_status === 'Low in stock' ? '#C62828' : '#2E7D32' }
+                  ]}>
+                    {item.badge_status || `ID: ${item.id}`}
+                  </Text>
                 </View>
               </View>
             ))
@@ -204,7 +256,7 @@ export default function DashboardScreen() {
 
       </ScrollView>
 
-      {/* ✨ แถบเนวิเกชั่นด้านล่าง ปรับแต่งให้แมตช์ 100% */}
+      {/* แถบเนวิเกชั่นด้านล่าง */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="home" size={22} color="#4A3525" />
@@ -347,9 +399,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F2EC',
   },
   productName: { fontSize: 14, fontWeight: '700', color: '#3E2723' },
-  productPrice: { fontSize: 13, color: '#8D6E63', marginTop: 2, fontWeight: '600' },
-  badge: { backgroundColor: '#F5F2EC', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#8A7A71' },
+  productPrice: { fontSize: 12, color: '#8D6E63', marginTop: 2, fontWeight: '600' },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  badgeText: { fontSize: 10, fontWeight: '700' },
   noDataText: { textAlign: 'center', color: '#A19288', marginTop: 10 },
 
   bottomTabBar: {
