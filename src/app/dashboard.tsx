@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
-  Image, // 👈 เพิ่ม Image สำหรับโชว์รูปภาพสินค้า
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -79,7 +79,7 @@ export default function DashboardScreen() {
 
         <ScrollView style={styles.sidebarMenu} showsVerticalScrollIndicator={false}>
           {[
-            { label: 'Control Center', icon: 'grid-outline', path: '/dashboard', active: true },
+            { label: 'Control Center', icon: 'home-outline', path: '/dashboard', active: true },
             { label: 'Insert Projector', icon: 'add-circle-outline', path: '/add-product' },
             { label: 'Warehouse Stock', icon: 'cube-outline', path: '/stock' },
             { label: 'Category Filter', icon: 'folder-open-outline', path: '/categories' },
@@ -136,7 +136,7 @@ export default function DashboardScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Real-time Analytics</Text>
 
-        {/* 📊 ตารางสถิติ (นับ IN STOCK จริงจาก Backend API) */}
+        {/* 📊 ตารางสถิติ */}
         <View style={styles.statsGrid}>
           {[
             { value: products.length.toString(), title: 'IN STOCK', color: '#6D8771' },
@@ -172,7 +172,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* 🔹 3. แสดงรายการสินค้าพร้อมรูปภาพที่ดึงมาจาก Express Backend */}
+        {/* 🔹 3. แสดงรายการสินค้าพร้อมรูปภาพ */}
         <Text style={styles.sectionTitle}>Live Products API Data</Text>
         <View style={styles.productListContainer}>
           {loading ? (
@@ -180,7 +180,6 @@ export default function DashboardScreen() {
           ) : products.length > 0 ? (
             products.map((item, index) => (
               <View key={item.id || index} style={styles.productCard}>
-                {/* 🖼️ แสดงรูปภาพสินค้า (ถ้าระบบยังไม่ส่งรูปมา จะใช้รูปภาพตัวอย่างรองรับให้อัตโนมัติค่ะ) */}
                 <Image
                   source={{
                     uri: item.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop'
@@ -205,10 +204,10 @@ export default function DashboardScreen() {
 
       </ScrollView>
 
-      {/* แถบเนวิเกชั่นด้านล่าง */}
+      {/* ✨ แถบเนวิเกชั่นด้านล่าง ปรับแต่งให้แมตช์ 100% */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
-          <Ionicons name="grid" size={22} color="#4A3525" />
+          <Ionicons name="home" size={22} color="#4A3525" />
           <Text style={[styles.tabText, styles.activeTabText]}>Home</Text>
         </TouchableOpacity>
 
@@ -236,7 +235,7 @@ const styles = StyleSheet.create({
   scrollContainer: { padding: 20, paddingBottom: 140 },
   header: {
     flexDirection: 'row',
-   justifyContent: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFF',
     paddingHorizontal: 20,
@@ -251,7 +250,7 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 12,
-   justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 11 },
@@ -293,7 +292,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F2EC',
     width: '31%',
     borderRadius: 20,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
@@ -320,7 +319,7 @@ const styles = StyleSheet.create({
   },
   chartRow: {
     flexDirection: 'row',
-   justifyContent: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'flex-end',
     flex: 1,
   },
@@ -329,7 +328,6 @@ const styles = StyleSheet.create({
   barLabel: { fontSize: 10, color: '#A19288', marginTop: 8, fontWeight: '600' },
   barValueText: { fontSize: 10, fontWeight: '700', color: '#8D6E63', marginBottom: 4 },
   
-  // 🛍️ สไตล์ของรายการสินค้าและรูปภาพ
   productListContainer: { marginTop: 4 },
   productCard: {
     backgroundColor: '#FFF',
@@ -363,7 +361,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 70,
     flexDirection: 'row',
-    justify: 'space-around',
+    justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 8 },
@@ -393,7 +391,7 @@ const styles = StyleSheet.create({
   },
   sidebarHeader: {
     flexDirection: 'row',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingBottom: 20,
     borderBottomWidth: 1,
