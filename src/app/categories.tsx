@@ -41,7 +41,7 @@ export default function CategoriesScreen() {
               style={styles.categoryCard}
               onPress={() => router.push('/stock')}
             >
-              {/* วงกลมไอคอนโทนครีมน้ำตาลอบอุ่นเวอร์ชั่นใหม่ ละมุนใจกว่าเดิม */}
+              {/* วงกลมไอคอนโทนครีมน้ำตาลอบอุ่น */}
               <View style={styles.iconContainer}>
                 <Ionicons name={item.icon as any} size={20} color="#8D6E63" />
               </View>
@@ -57,7 +57,7 @@ export default function CategoriesScreen() {
         />
       </View>
 
-      {/* ✨ 🦄 แถบเนวิเกชั่นด้านล่างดีไซน์มินิมอลลอยตัวสุดคิ้วท์ (แมตช์คู่หน้า Stock 100%) */}
+      {/* ✨ แถบเนวิเกชั่นด้านล่างดีไซน์แมตช์คู่หน้า Stock 100% */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="home-outline" size={22} color="#8A7A71" />
@@ -69,8 +69,9 @@ export default function CategoriesScreen() {
           <Text style={styles.tabText}>Add</Text>
         </TouchableOpacity>
 
+        {/* 📦 ปรับเปลี่ยนมาใช้ไอคอน cube ทึบ ให้สวยงามตรงกับหน้า Stock แล้วครับ */}
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/stock')}>
-          <Ionicons name="cube-outline" size={22} color="#8A7A71" />
+          <Ionicons name="cube" size={22} color="#8A7A71" />
           <Text style={styles.tabText}>Products</Text>
         </TouchableOpacity>
 
@@ -84,7 +85,6 @@ export default function CategoriesScreen() {
 }
 
 const styles = StyleSheet.create({
-  // พื้นหลังสีครีมนวลนุ่ม Cozy มินิมอล
   container: { flex: 1, backgroundColor: '#F7F4F0' },
   header: {
     flexDirection: 'row',
@@ -123,9 +123,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontWeight: '500',
   },
-  listContent: { paddingBottom: 140 }, // เพิ่มระยะให้ลิสต์เขยิบขึ้น ไม่โดนแถบเมนูลอยบังอันสุดท้ายค่ะ
+  listContent: { paddingBottom: 140 },
   
-  // การ์ดหมวดหมู่สีขาว ขอบมน มีเงานุ่มนวลน่ารัก
   categoryCard: {
     backgroundColor: '#FFF',
     padding: 14,
@@ -152,7 +151,6 @@ const styles = StyleSheet.create({
   categoryName: { fontSize: 14, fontWeight: '700', color: '#3E2723' },
   itemsCount: { fontSize: 11, color: '#A19288', marginTop: 3, fontWeight: '600' },
   
-  /* 🎨 ดีไซน์เมนูด้านล่างแบบลอยตัวละมุนใจ (เหมือนหน้าสินค้า) */
   bottomTabBar: {
     position: 'absolute',
     bottom: 25,
