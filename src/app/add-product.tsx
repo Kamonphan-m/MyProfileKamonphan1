@@ -34,8 +34,24 @@ export default function AddProductScreen() {
     }
   }, [editId]);
 
+  // ✨ ดึงข้อมูลสินค้าจาก AsyncStorage มาหยอดใส่ช่องให้อัตโนมัติ
   const loadProductForEdit = async () => {
     try {
+      // 1. ดึงข้อมูลจาก Local Storage ในเครื่องก่อน
+      const storedData = await AsyncStorage.getItem('@lumen_products');
+      if (storedData) {
+        const localProducts = JSON.parse(storedData);
+        const item = localProducts.find((p: any) => String(p.id) === String(editId));
+        if (item) {
+          setName(item.name || '');
+          setPrice(item.price ? String(item.price) : '');
+          setStock(item.stock ? String(item.stock) : '');
+          setImageUrl(item.image || '');
+          return;
+        }
+      }
+
+      // 2. ถ้าในเครื่องไม่มี ลองหาจาก Server (เผื่อไว้)
       const response = await fetch(`${API_BASE_URL}/products`);
       const products = await response.json();
       const item = products.find((p: any) => String(p.id) === String(editId));
@@ -46,7 +62,7 @@ export default function AddProductScreen() {
         setImageUrl(item.image || '');
       }
     } catch (error) {
-      console.error("Error loading product:", error);
+      console.log("Error loading product for edit:", error);
     }
   };
 
@@ -59,7 +75,6 @@ export default function AddProductScreen() {
     }
   };
 
-  // ✨ ฟังก์ชัน handleSave ปรับแก้ให้ผ่านแน่นอน 100%
   const handleSave = async () => {
     if (!name.trim() || !price.trim() || !stock.trim()) {
       showAlert('Missing Info', 'Please fill in all core configurations.');
@@ -87,7 +102,7 @@ export default function AddProductScreen() {
       image: finalImg
     };
 
-    // 1. ลองส่ง Server (ถ้าติด Error ให้ข้ามอย่างเงียบๆ)
+    // ส่ง Server สำรอง
     try {
       const method = editId ? 'PUT' : 'POST';
       const endpoint = editId ? `${API_BASE_URL}/products/${editId}` : `${API_BASE_URL}/products`;
@@ -100,14 +115,14 @@ export default function AddProductScreen() {
       console.log("Server error ignored, saving locally.");
     }
 
-    // 2. เซฟลงเครื่องเสมอ เพื่อให้ทำงานต่อได้สมบูรณ์
+    // เซฟลงเครื่องเสมอ
     try {
       const storedData = await AsyncStorage.getItem('@lumen_products');
       let localProducts = storedData ? JSON.parse(storedData) : [];
       
       if (editId) {
         localProducts = localProducts.map((p: any) =>
-          String(p.id) === String(editId) ? { ...p, ...payload } : p
+          String(p.id) === String(editId) ? { ...p, ...payload, id: p.id } : p
         );
       } else {
         localProducts.unshift({ id: Date.now().toString(), ...payload });
