@@ -217,7 +217,6 @@ export default function StockScreen() {
           All Products ({filteredProducts.length})
         </Text>
         
-        {/* FlatList กำหนด paddingBottom 140 เพื่อดันท้ายสุดพ้นเมนู */}
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => String(item.id)}
@@ -391,7 +390,7 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EDE9E2' },
   headerContent: {
     flexDirection: 'row',
-    justify.content: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
@@ -488,7 +487,7 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     borderTopWidth: 1,
     borderTopColor: '#F5F2EC',
     paddingTop: 8,
@@ -518,7 +517,6 @@ const styles = StyleSheet.create({
   checkoutBtn: { backgroundColor: '#4A3525', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   checkoutBtnText: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
 
-  /* แถบเมนูลอยแบบมีกรอบรองรับ ไม่บังสินค้าแถวล่าง */
   bottomTabBarWrapper: {
     position: 'absolute',
     bottom: 0,
@@ -536,7 +534,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 65,
     flexDirection: 'row',
-    justify: 'space-around',
+    justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 4 },
