@@ -79,7 +79,7 @@ export default function StockScreen() {
       </View>
 
       <View style={styles.contentBody}>
-        {/* 🔍 ช่องค้นหาสินค้า (Search Bar สำหรับข้อ 5) */}
+        {/* 🔍 ช่องค้นหาสินค้า (Search Bar) */}
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#8A7A71" style={{ marginRight: 8 }} />
           <TextInput
@@ -100,9 +100,12 @@ export default function StockScreen() {
           All Products ({filteredProducts.length})
         </Text>
         
+        {/* 📦 FlatList ปรับเป็น 2 คอลัมน์แนวตั้ง */}
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => String(item.id)}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 140 }}
           renderItem={({ item }) => {
@@ -119,23 +122,21 @@ export default function StockScreen() {
                   })}
                 >
                   <Image source={{ uri: imageUrl }} style={styles.productImage} />
-                  <View style={styles.infoContainer}>
-                    <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-                    
-                    <View style={styles.metaRow}>
-                      <Text style={styles.productPrice}>THB {Number(item.price).toLocaleString()}</Text>
-                      
-                      <View style={[styles.badge, { backgroundColor: Number(item.stock) > 0 ? '#E8F5E9' : '#FFEBEE' }]}>
-                        <Text style={[styles.badgeText, { color: Number(item.stock) > 0 ? '#2E7D32' : '#C62828' }]}>
-                          {Number(item.stock) > 0 ? 'Available' : 'Low Stock'}
-                        </Text>
-                      </View>
+                  
+                  <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                  <Text style={styles.productPrice}>THB {Number(item.price).toLocaleString()}</Text>
+                  
+                  <View style={styles.metaRow}>
+                    <View style={[styles.badge, { backgroundColor: Number(item.stock) > 0 ? '#E8F5E9' : '#FFEBEE' }]}>
+                      <Text style={[styles.badgeText, { color: Number(item.stock) > 0 ? '#2E7D32' : '#C62828' }]}>
+                        {Number(item.stock) > 0 ? 'Available' : 'Low Stock'}
+                      </Text>
                     </View>
-                    <Text style={styles.qtyText}>Stock: {item.stock} Units</Text>
+                    <Text style={styles.qtyText}>Stock: {item.stock}</Text>
                   </View>
                 </TouchableOpacity>
 
-                {/* ปุ่ม Edit & Delete */}
+                {/* ปุ่ม Edit & Delete ด้านล่างการ์ด */}
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
                     style={styles.gearBtn}
@@ -153,7 +154,7 @@ export default function StockScreen() {
         />
       </View>
 
-      {/* ✨ แถบเนวิเกชั่นด้านล่าง สไตล์เดียวกันทุกหน้า 100% */}
+      {/* แถบเนวิเกชั่นด้านล่าง */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
           <Ionicons name="home-outline" size={22} color="#8A7A71" />
@@ -206,21 +207,49 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#4A3525', marginBottom: 15 },
 
-  productCard: { backgroundColor: '#FFF', borderRadius: 20, flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 14, justifyContent: 'space-between', shadowColor: '#3E2723', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardPressable: { flexDirection: 'row', flex: 1, alignItems: 'center' },
-  productImage: { width: 65, height: 65, borderRadius: 16, backgroundColor: '#F5F5F5', marginRight: 15 },
-  infoContainer: { flex: 1, paddingRight: 5 },
-  productName: { fontSize: 14, fontWeight: '700', color: '#3E2723', marginBottom: 6 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  productPrice: { fontSize: 13, color: '#8D6E63', fontWeight: '800' },
+  /* Styles สำหรับ Grid View */
+  columnWrapper: { justifyContent: 'space-between' },
+  productCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 14,
+    width: '48.5%',
+    shadowColor: '#3E2723',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    justifyContent: 'space-between',
+  },
+  cardPressable: { width: 100 + '%' },
+  productImage: {
+    width: '100%',
+    height: 110,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    marginBottom: 10,
+    resizeMode: 'contain',
+  },
+  productName: { fontSize: 12, fontWeight: '700', color: '#3E2723', marginBottom: 4, height: 32 },
+  productPrice: { fontSize: 13, color: '#8D6E63', fontWeight: '800', marginBottom: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
 
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  badgeText: { fontSize: 9, fontWeight: '700' },
-  qtyText: { fontSize: 11, color: '#A19288' },
+  badge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  badgeText: { fontSize: 8, fontWeight: '700' },
+  qtyText: { fontSize: 10, color: '#A19288' },
 
-  actionButtons: { flexDirection: 'row', alignItems: 'center', marginLeft: 10 },
-  gearBtn: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#F5F2EC', justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-  deleteBtn: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#FFEBEE', justifyContent: 'center', alignItems: 'center' },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#F5F2EC',
+    paddingTop: 8,
+    marginTop: 2,
+  },
+  gearBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#F5F2EC', justifyContent: 'center', alignItems: 'center', marginRight: 4 },
+  deleteBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#FFEBEE', justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
 
   bottomTabBar: {
     position: 'absolute',
@@ -231,7 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 70,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justify: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 8 },
