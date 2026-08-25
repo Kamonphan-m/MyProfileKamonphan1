@@ -18,9 +18,9 @@ const INITIAL_PROJECTOR_DATA = [
 export default function StockScreen() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState(''); // State สำหรับช่อง Search
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // 🔴 โค้ดส่วนที่ต้องแคปส่งอาจารย์ (บรรทัดที่ 22 - 44) ยังอยู่ครบและไม่ซ้ำเพื่อนค่ะ
+  // 🔴 โค้ดส่วนดึงข้อมูลเดิม ไม่กระทบกับระบบ
   useEffect(() => {
     const apiController = new AbortController();
 
@@ -46,7 +46,6 @@ export default function StockScreen() {
     return () => apiController.abort();
   }, []);
 
-  // ฟังก์ชันลบสินค้า (Delete)
   const deleteProduct = async (id: string) => {
     try {
       const updatedList = products.filter(item => item.id !== id);
@@ -57,7 +56,6 @@ export default function StockScreen() {
     }
   };
 
-  // ฟังก์ชันกรองค้นหาสินค้า (Search Filter)
   const filteredProducts = products.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -79,7 +77,7 @@ export default function StockScreen() {
       </View>
 
       <View style={styles.contentBody}>
-        {/* 🔍 ช่องค้นหาสินค้า (Search Bar) */}
+        {/* ช่อง Search */}
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#8A7A71" style={{ marginRight: 8 }} />
           <TextInput
@@ -100,7 +98,7 @@ export default function StockScreen() {
           All Products ({filteredProducts.length})
         </Text>
         
-        {/* 📦 FlatList ปรับเป็น 2 คอลัมน์แนวตั้ง */}
+        {/* FlatList 2 คอลัมน์พร้อมดีไซน์การ์ดสินค้าเน้นรูปภาพ */}
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => String(item.id)}
@@ -121,22 +119,27 @@ export default function StockScreen() {
                     params: { id: item.id, name: item.name, price: item.price, stock: item.stock, image: imageUrl }
                   })}
                 >
-                  <Image source={{ uri: imageUrl }} style={styles.productImage} />
+                  {/* กรอบแสดงรูปสินค้าทรงโดดเด่น */}
+                  <View style={styles.imageWrapper}>
+                    <Image source={{ uri: imageUrl }} style={styles.productImage} />
+                  </View>
                   
-                  <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-                  <Text style={styles.productPrice}>THB {Number(item.price).toLocaleString()}</Text>
-                  
-                  <View style={styles.metaRow}>
-                    <View style={[styles.badge, { backgroundColor: Number(item.stock) > 0 ? '#E8F5E9' : '#FFEBEE' }]}>
-                      <Text style={[styles.badgeText, { color: Number(item.stock) > 0 ? '#2E7D32' : '#C62828' }]}>
-                        {Number(item.stock) > 0 ? 'Available' : 'Low Stock'}
-                      </Text>
+                  <View style={styles.detailsContainer}>
+                    <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                    <Text style={styles.productPrice}>THB {Number(item.price).toLocaleString()}</Text>
+                    
+                    <View style={styles.metaRow}>
+                      <View style={[styles.badge, { backgroundColor: Number(item.stock) > 0 ? '#E8F5E9' : '#FFEBEE' }]}>
+                        <Text style={[styles.badgeText, { color: Number(item.stock) > 0 ? '#2E7D32' : '#C62828' }]}>
+                          {Number(item.stock) > 0 ? 'Available' : 'Low Stock'}
+                        </Text>
+                      </View>
+                      <Text style={styles.qtyText}>Stock: {item.stock}</Text>
                     </View>
-                    <Text style={styles.qtyText}>Stock: {item.stock}</Text>
                   </View>
                 </TouchableOpacity>
 
-                {/* ปุ่ม Edit & Delete ด้านล่างการ์ด */}
+                {/* แถบบุ่มจัดการสินค้าด้านล่าง */}
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
                     style={styles.gearBtn}
@@ -191,7 +194,6 @@ const styles = StyleSheet.create({
 
   contentBody: { flex: 1, paddingHorizontal: 20, paddingTop: 15 },
   
-  /* ช่อง Search */
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -207,37 +209,50 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#4A3525', marginBottom: 15 },
 
-  /* Styles สำหรับ Grid View */
+  /* 🎨 ดีไซน์การ์ดสินค้าใหม่ */
   columnWrapper: { justifyContent: 'space-between' },
   productCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 18,
-    padding: 12,
-    marginBottom: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 10,
+    marginBottom: 16,
     width: '48.5%',
     shadowColor: '#3E2723',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    justifyContent: 'space-between',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+    justify: 'space-between',
+    borderWidth: 1,
+    borderColor: '#F0EBE3',
   },
   cardPressable: { width: '100%' },
+  
+  /* กรอบเน้นรูปภาพสินค้า */
+  imageWrapper: {
+    width: '100%',
+    height: 160,
+    borderRadius: 14,
+    backgroundColor: '#FAF8F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 8,
+    marginBottom: 10,
+  },
   productImage: {
     width: '100%',
-    height: 110,
-    borderRadius: 12,
-    backgroundColor: '#F5F5F5',
-    marginBottom: 10,
+    height: '100%',
     resizeMode: 'contain',
   },
-  productName: { fontSize: 12, fontWeight: '700', color: '#3E2723', marginBottom: 4, height: 32 },
-  productPrice: { fontSize: 13, color: '#8D6E63', fontWeight: '800', marginBottom: 6 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  
+  detailsContainer: { paddingHorizontal: 4 },
+  productName: { fontSize: 13, fontWeight: '700', color: '#3E2723', marginBottom: 4, height: 34, lineHeight: 17 },
+  productPrice: { fontSize: 14, color: '#8D6E63', fontWeight: '800', marginBottom: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
 
-  badge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  badgeText: { fontSize: 8, fontWeight: '700' },
-  qtyText: { fontSize: 10, color: '#A19288' },
+  badge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 },
+  badgeText: { fontSize: 9, fontWeight: '700' },
+  qtyText: { fontSize: 10, color: '#A19288', fontWeight: '500' },
 
   actionButtons: {
     flexDirection: 'row',
@@ -246,7 +261,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F5F2EC',
     paddingTop: 8,
-    marginTop: 2,
+    marginTop: 4,
   },
   gearBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#F5F2EC', justifyContent: 'center', alignItems: 'center', marginRight: 4 },
   deleteBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#FFEBEE', justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
@@ -260,7 +275,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 70,
     flexDirection: 'row',
-    justifyContent: 'space-around', // ✅ แก้ไขคำผิดเป็น justifyContent
+    justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 8 },
