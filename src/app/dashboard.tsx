@@ -22,7 +22,7 @@ const { width } = Dimensions.get('window');
 // 🌐 Base URL เซิร์ฟเวอร์
 const API_BASE_URL = 'http://119.59.102.161:3005/api';
 
-// 📦 ข้อมูลสำรอง (Mock Data) ตรงตามรูปภาพของหนูเป๊ะๆ
+// 📦 ข้อมูลสำรอง (Mock Data)
 const LOCAL_MOCK_PRODUCTS = [
   {
     id: "1",
@@ -89,12 +89,10 @@ export default function DashboardScreen() {
       if (Array.isArray(data) && data.length > 0) {
         setProducts(data);
       } else {
-        // ใช้ไฟล์ products.json หรือ MOCK หาก API ไม่มีข้อมูล
         setProducts(localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS);
       }
     } catch (error) {
       console.log("Fetch failed, fallback to local products");
-      // ใช้ข้อมูล localProductsData จากไฟล์ json หรือ LOCAL_MOCK_PRODUCTS
       setProducts(localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS);
     } finally {
       setLoading(false);
@@ -172,15 +170,17 @@ export default function DashboardScreen() {
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={toggleMenu} />
       )}
 
-      {/* Header ด้านบน */}
+      {/* Header ด้านบนแบบสมส่วน */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={toggleMenu} style={styles.menuTrigger}>
-          <Ionicons name="menu-outline" size={22} color="#4A3525" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>DASHBOARD</Text>
-        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/login')}>
-          <Text style={styles.avatarText}>AD</Text>
-        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={toggleMenu} style={styles.menuTrigger}>
+            <Ionicons name="menu-outline" size={22} color="#4A3525" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>DASHBOARD</Text>
+          <TouchableOpacity style={styles.avatar} onPress={() => router.push('/login')}>
+            <Text style={styles.avatarText}>AD</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -220,7 +220,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* 🔹 ส่วนแสดงผลสินค้า ปรับให้ตรงตามรูปภาพตัวอย่างเป๊ะๆ */}
+        {/* 🔹 ส่วนแสดงผลสินค้า */}
         <Text style={styles.sectionTitle}>LIVE PRODUCTS API DATA</Text>
         <View style={styles.productListContainer}>
           {loading ? (
@@ -228,7 +228,6 @@ export default function DashboardScreen() {
           ) : products.length > 0 ? (
             products.map((item, index) => (
               <View key={item.id || index} style={styles.productCard}>
-                {/* 🖼️ รูปภาพสินค้า */}
                 <Image
                   source={{
                     uri: item.image || item.image_url || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400'
@@ -237,7 +236,6 @@ export default function DashboardScreen() {
                   resizeMode="contain"
                 />
 
-                {/* 📝 ชื่อสินค้า และ ราคา */}
                 <View style={{ flex: 1, paddingRight: 8 }}>
                   <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
                   <Text style={styles.productPrice}>
@@ -245,7 +243,6 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
 
-                {/* 🏷️ ป้าย ID ฝั่งขวา */}
                 <View style={styles.idBadge}>
                   <Text style={styles.idBadgeText}>ID: {item.id}</Text>
                 </View>
@@ -258,27 +255,29 @@ export default function DashboardScreen() {
 
       </ScrollView>
 
-      {/* แถบเนวิเกชั่นด้านล่าง */}
-      <View style={styles.bottomTabBar}>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
-          <Ionicons name="home" size={22} color="#4A3525" />
-          <Text style={[styles.tabText, styles.activeTabText]}>Home</Text>
-        </TouchableOpacity>
+      {/* แถบเนวิเกชั่นด้านล่างแบบ Floating ดีไซน์เดียวกันกับ Stock */}
+      <View style={styles.bottomTabBarWrapper}>
+        <View style={styles.bottomTabBar}>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
+            <Ionicons name="home" size={22} color="#4A3525" />
+            <Text style={[styles.tabText, styles.activeTabText]}>Home</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/add-product')}>
-          <Ionicons name="add-circle-outline" size={22} color="#8A7A71" />
-          <Text style={styles.tabText}>Add</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/add-product')}>
+            <Ionicons name="add-circle-outline" size={22} color="#8A7A71" />
+            <Text style={styles.tabText}>Add</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/stock')}>
-          <Ionicons name="cube-outline" size={22} color="#8A7A71" />
-          <Text style={styles.tabText}>Products</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/stock')}>
+            <Ionicons name="cube-outline" size={22} color="#8A7A71" />
+            <Text style={styles.tabText}>Products</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/categories')}>
-          <Ionicons name="grid-outline" size={22} color="#8A7A71" />
-          <Text style={styles.tabText}>Categories</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/categories')}>
+            <Ionicons name="grid-outline" size={22} color="#8A7A71" />
+            <Text style={styles.tabText}>Categories</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -286,16 +285,20 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F4F0' },
-  scrollContainer: { padding: 20, paddingBottom: 140 },
   header: {
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDE9E2',
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFF',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDE9E2',
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center',
   },
   headerTitle: { fontSize: 14, fontWeight: '800', color: '#3E2723', letterSpacing: 1.5 },
   menuTrigger: { backgroundColor: '#F5F2EC', padding: 8, borderRadius: 12 },
@@ -308,6 +311,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 11 },
+  
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 140,
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center',
+  },
   
   sectionTitle: {
     fontSize: 11,
@@ -403,7 +414,6 @@ const styles = StyleSheet.create({
   productName: { fontSize: 13, fontWeight: '700', color: '#3E2723' },
   productPrice: { fontSize: 12, color: '#8D6E63', marginTop: 3, fontWeight: '700' },
   
-  // 🏷️ สไตล์สำหรับป้าย ID ฝั่งขวาเหมือนในรูป
   idBadge: {
     backgroundColor: '#F5F2EC',
     paddingHorizontal: 10,
@@ -418,11 +428,18 @@ const styles = StyleSheet.create({
 
   noDataText: { textAlign: 'center', color: '#A19288', marginTop: 10 },
 
-  bottomTabBar: {
+  /* 📌 แถบเนวิเกชั่นด้านล่างลอยจัดตรงกลางจอ */
+  bottomTabBarWrapper: {
     position: 'absolute',
     bottom: 25,
-    left: 20,
-    right: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  bottomTabBar: {
+    width: '90%',
+    maxWidth: 860,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     height: 70,
@@ -436,7 +453,6 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 1,
     borderColor: '#EDE9E2',
-    zIndex: 10
   },
   tabItem: { alignItems: 'center', justifyContent: 'center', width: 65, height: 50 },
   tabText: { fontSize: 10, color: '#A19288', fontWeight: '600', marginTop: 4 },
@@ -447,6 +463,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: '75%',
+    maxWidth: 320,
     backgroundColor: '#FFF',
     padding: 24,
     zIndex: 100,
