@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   Image,
   Modal,
   SafeAreaView,
@@ -17,7 +16,6 @@ import {
   View
 } from 'react-native';
 
-const { width } = Dimensions.get('window');
 const API_BASE_URL = 'http://119.59.102.161:3005/api';
 
 interface CartItem {
@@ -29,8 +27,8 @@ interface CartItem {
   stock: number;
 }
 
-// 📦 ข้อมูลสินค้าทั้ง 6 รายการตามรูปภาพ
-const INITIAL_MOCK_PRODUCTS = [
+// 📦 ข้อมูลสินค้าตั้งต้นตรงตามรูปเดิม
+const INITIAL_PRODUCTS = [
   {
     id: "1",
     name: "WANBO X2 Max Smart Android Projector",
@@ -88,8 +86,6 @@ export default function StockScreen() {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-
-      // 1. ลองเรียกจาก API ดูก่อน
       const response = await fetch(`${API_BASE_URL}/products`);
       if (response.ok) {
         const data = await response.json();
@@ -99,13 +95,9 @@ export default function StockScreen() {
           return;
         }
       }
-
-      // 2. ถ้า API ไม่มีข้อมูล ให้ใช้ 6 รายการตามภาพ
-      setProducts(INITIAL_MOCK_PRODUCTS);
-      await AsyncStorage.setItem('local_products', JSON.stringify(INITIAL_MOCK_PRODUCTS));
+      setProducts(INITIAL_PRODUCTS);
     } catch {
-      // 3. เกิด Error ให้ดึงข้อมูลสำรอง 6 รายการมาแสดงทันที
-      setProducts(INITIAL_MOCK_PRODUCTS);
+      setProducts(INITIAL_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -115,7 +107,7 @@ export default function StockScreen() {
     fetchProducts();
   }, [fetchProducts]);
 
-  // 🛒 ระบบเพิ่มสินค้าลงตะกร้า
+  // 🛒 ฟังก์ชันจัดการตะกร้าสินค้า
   const addToCart = (product: any) => {
     if (product.stock <= 0) {
       Alert.alert('สินค้าหมด', 'สินค้ารายการนี้หมดสต็อกแล้ว');
@@ -123,7 +115,7 @@ export default function StockScreen() {
     }
 
     setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex((item) => item.id === product.id);
+      const existingIndex = prevCart.findIndex((item) => item.id === String(product.id));
       if (existingIndex > -1) {
         const currentQty = prevCart[existingIndex].quantity;
         if (currentQty >= product.stock) {
@@ -210,7 +202,7 @@ export default function StockScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* Header ด้านบน */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={20} color="#42362B" />
@@ -238,6 +230,7 @@ export default function StockScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* ช่องค้นหา */}
         <View style={styles.searchBox}>
           <Ionicons name="search-outline" size={18} color="#A09385" style={{ marginRight: 8 }} />
           <TextInput
@@ -249,43 +242,37 @@ export default function StockScreen() {
           />
         </View>
 
-        <Text style={styles.sectionTitle}>All Products ({filteredProducts.length})</Text>
+        {/* หัวข้อรายการสินค้าเหมือนในรูป */}
+        <Text style={styles.sectionTitle}>รายการโปรเจกเตอร์ทั้งหมด (สั่งซื้อสินค้า)</Text>
 
+        {/* แสดงรายการแบบ List View แนวนอน */}
         {loading ? (
           <ActivityIndicator size="large" color="#EAA43A" style={{ marginTop: 40 }} />
         ) : (
-          <View style={styles.productGrid}>
+          <View style={styles.productList}>
             {filteredProducts.map((item, index) => (
-              <View key={item.id || index} style={styles.card}>
+              <View key={item.id || index} style={styles.productCard}>
                 <Image
                   source={{ uri: item.image || item.image_url || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400' }}
-                  style={styles.cardImage}
+                  style={styles.productImage}
                   resizeMode="contain"
                 />
 
-                <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
-                
-                <Text style={styles.cardPrice}>
-                  THB {Number(item.price || 0).toLocaleString()}
-                </Text>
-
-                <View style={styles.stockRow}>
-                  <View style={styles.availableBadge}>
-                    <Text style={styles.availableBadgeText}>
-                      {item.stock > 0 ? 'Available' : 'Out of Stock'}
-                    </Text>
-                  </View>
-                  <Text style={styles.stockText}>Stock: {item.stock ?? 0}</Text>
+                <View style={styles.productDetails}>
+                  <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                  <Text style={styles.productMeta}>
+                    ฿{Number(item.price || 0).toLocaleString()} • คงเหลือ: {item.stock ?? 0} เครื่อง
+                  </Text>
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.addToCartBtn, item.stock <= 0 && styles.disabledBtn]}
+                  style={[styles.cartButton, item.stock <= 0 && styles.disabledCartButton]}
                   onPress={() => addToCart(item)}
                   disabled={item.stock <= 0}
                 >
-                  <Ionicons name="cart" size={15} color="#FFF" style={{ marginRight: 4 }} />
-                  <Text style={styles.addToCartText}>
-                    {item.stock > 0 ? 'ใส่ตะกร้า' : 'สินค้าหมด'}
+                  <Ionicons name="cart" size={16} color="#FFF" style={{ marginRight: 4 }} />
+                  <Text style={styles.cartButtonText}>
+                    {item.stock > 0 ? 'ใส่ตะกร้า' : 'หมด'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -434,38 +421,42 @@ const styles = StyleSheet.create({
     borderColor: '#F3EED9',
   },
   searchInput: { flex: 1, fontSize: 13, color: '#42362B' },
-  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#42362B', marginTop: 18, marginBottom: 12 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#6A5F56', marginTop: 18, marginBottom: 14 },
 
-  productGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  card: {
-    width: (width - 44) / 2,
+  // เลย์เอาต์แบบแนวนอน (List Row) ตามรูปภาพ
+  productList: { gap: 12 },
+  productCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 12,
-    marginBottom: 14,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#F3EED9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  cardImage: { width: '100%', height: 110, borderRadius: 10, marginBottom: 8 },
-  cardTitle: { fontSize: 12, fontWeight: '700', color: '#42362B', height: 32 },
-  cardPrice: { fontSize: 13, fontWeight: '900', color: '#EAA43A', marginTop: 4 },
-  
-  stockRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 10 },
-  availableBadge: { backgroundColor: '#E8F5E9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  availableBadgeText: { color: '#2E7D32', fontSize: 9, fontWeight: '800' },
-  stockText: { fontSize: 10, color: '#998675', fontWeight: '600' },
+  productImage: { width: 54, height: 54, borderRadius: 10, backgroundColor: '#FAF8F5' },
+  productDetails: { flex: 1, paddingHorizontal: 14 },
+  productName: { fontSize: 13, fontWeight: '700', color: '#42362B', marginBottom: 4 },
+  productMeta: { fontSize: 12, color: '#8C7E72', fontWeight: '600' },
 
-  addToCartBtn: {
+  cartButton: {
     backgroundColor: '#EAA43A',
-    borderRadius: 10,
-    paddingVertical: 8,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  disabledBtn: { backgroundColor: '#D4C8B5' },
-  addToCartText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
+  disabledCartButton: { backgroundColor: '#EAA43A', opacity: 0.9 },
+  cartButtonText: { color: '#FFF', fontSize: 12, fontWeight: '800' },
 
+  // Modal ตะกร้าสินค้า
   modalOverlay: { flex: 1, backgroundColor: 'rgba(66, 54, 43, 0.4)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#FAF4DF' },
@@ -488,6 +479,7 @@ const styles = StyleSheet.create({
   checkoutBtn: { backgroundColor: '#EAA43A', borderRadius: 14, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   checkoutBtnText: { color: '#FFF', fontSize: 14, fontWeight: '800' },
 
+  // Navigation Bar ด้านล่าง
   bottomTabBarWrapper: { position: 'absolute', bottom: 25, left: 0, right: 0, alignItems: 'center', zIndex: 10 },
   bottomTabBar: { width: '90%', maxWidth: 860, backgroundColor: '#FFFFFF', borderRadius: 24, height: 70, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', shadowColor: '#5C4827', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 8, borderWidth: 1, borderColor: '#F3EED9' },
   tabItem: { alignItems: 'center', justifyContent: 'center', width: 65, height: 50 },
