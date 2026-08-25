@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     justifyContent: 'space-between',
   },
-  cardPressable: { width: 100 + '%' },
+  cardPressable: { width: '100%' },
   productImage: {
     width: '100%',
     height: 110,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 70,
     flexDirection: 'row',
-    justify: 'space-around',
+    justifyContent: 'space-around', // ✅ แก้ไขคำผิดเป็น justifyContent
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 8 },
