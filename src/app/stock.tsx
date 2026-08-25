@@ -33,7 +33,6 @@ export default function StockScreen() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // 🛒 Cart & Payment States
   const [cart, setCart] = useState<any[]>([]);
   const [isCartVisible, setIsCartVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -115,14 +114,12 @@ export default function StockScreen() {
     saveCart(updatedCart);
   };
 
-  // 💳 ฟังก์ชันชำระเงิน และ หักสต็อกสินค้าจริง
   const handleCheckout = async () => {
     if (cart.length === 0) return;
 
     setIsProcessing(true);
 
     setTimeout(async () => {
-      // 1. คำนวณยอดสต็อกที่เหลือ
       const updatedProducts = products.map((prod) => {
         const cartItem = cart.find((c) => c.id === prod.id);
         if (cartItem) {
@@ -133,18 +130,15 @@ export default function StockScreen() {
         return prod;
       });
 
-      // 2. อัปเดต State และบันทึกลง AsyncStorage
       setProducts(updatedProducts);
       await AsyncStorage.setItem('@lumen_products', JSON.stringify(updatedProducts));
 
       const totalPaid = totalCartPrice.toLocaleString();
 
-      // 3. เคลียร์ตระกร้าสินค้า
       await saveCart([]);
       setIsProcessing(false);
       setIsCartVisible(false);
 
-      // 4. แสดงการแจ้งเตือนความสำเร็จ
       showNotice(
         '🎉 ชำระเงินสำเร็จ!',
         `รับชำระเงินจำนวน THB ${totalPaid} เรียบร้อยแล้ว\nระบบได้ทำการปรับลดสต็อกสินค้าแล้วค่ะ`
@@ -179,6 +173,7 @@ export default function StockScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.navBtn}>
@@ -200,6 +195,7 @@ export default function StockScreen() {
         </View>
       </View>
 
+      {/* Main Content Area */}
       <View style={styles.contentBody}>
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#8A7A71" style={{ marginRight: 8 }} />
@@ -227,7 +223,7 @@ export default function StockScreen() {
           numColumns={2}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => {
             const fallbackImg = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400';
             const imageUrl = item.image && item.image.trim() !== '' ? item.image : fallbackImg;
@@ -287,7 +283,7 @@ export default function StockScreen() {
         />
       </View>
 
-      {/* 🛒 Modal Shopping Cart & Payment */}
+      {/* Cart Modal */}
       <Modal visible={isCartVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.cartContainer}>
@@ -361,6 +357,7 @@ export default function StockScreen() {
         </View>
       </Modal>
 
+      {/* Bottom Navigation Docked Cleanly at Bottom */}
       <View style={styles.bottomTabBarWrapper}>
         <View style={styles.bottomTabBar}>
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
@@ -520,27 +517,28 @@ const styles = StyleSheet.create({
   checkoutBtn: { backgroundColor: '#4A3525', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   checkoutBtnText: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
 
+  /* แก้ไข: ปรับแถบเมนูด้านล่างเป็น Footer ถาวร ไม่บังสินค้าอีกต่อไป */
   bottomTabBarWrapper: {
-    position: 'absolute',
-    bottom: 25,
-    left: 0,
-    right: 0,
+    backgroundColor: '#F7F4F0',
+    paddingVertical: 10,
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#EDE9E2',
   },
   bottomTabBar: {
     width: '90%',
     maxWidth: 860,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    height: 70,
+    height: 65,
     flexDirection: 'row',
     justify: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowRadius: 10,
+    elevation: 5,
     borderWidth: 1,
     borderColor: '#EDE9E2',
   },
