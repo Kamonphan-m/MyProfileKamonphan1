@@ -20,7 +20,6 @@ export default function StockScreen() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 🔴 โค้ดส่วนดึงข้อมูลเดิม ไม่กระทบกับระบบ
   useEffect(() => {
     const apiController = new AbortController();
 
@@ -64,16 +63,18 @@ export default function StockScreen() {
     <SafeAreaView style={styles.container}>
       {/* ส่วนหัวแอป */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.navBtn}>
-          <Ionicons name="chevron-back" size={22} color="#4A3525" />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>LUMEN PROJECTOR</Text>
-          <Text style={styles.headerSubtitle}>Premium Audio & Visual</Text>
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.navBtn}>
+            <Ionicons name="chevron-back" size={22} color="#4A3525" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>LUMEN PROJECTOR</Text>
+            <Text style={styles.headerSubtitle}>Premium Audio & Visual</Text>
+          </View>
+          <TouchableOpacity style={styles.addHeaderBtn} onPress={() => router.push('/add-product')}>
+            <Ionicons name="add" size={20} color="#FFF" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.addHeaderBtn} onPress={() => router.push('/add-product')}>
-          <Ionicons name="add" size={20} color="#FFF" />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.contentBody}>
@@ -98,14 +99,14 @@ export default function StockScreen() {
           All Products ({filteredProducts.length})
         </Text>
         
-        {/* FlatList 2 คอลัมน์พร้อมดีไซน์การ์ดสินค้าเน้นรูปภาพ */}
+        {/* FlatList ปรับแต่งการ์ดขนาดสมส่วน */}
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => String(item.id)}
           numColumns={2}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 140 }}
+          contentContainerStyle={{ paddingBottom: 120 }}
           renderItem={({ item }) => {
             const fallbackImg = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400';
             const imageUrl = item.image && item.image.trim() !== '' ? item.image : fallbackImg;
@@ -119,7 +120,7 @@ export default function StockScreen() {
                     params: { id: item.id, name: item.name, price: item.price, stock: item.stock, image: imageUrl }
                   })}
                 >
-                  {/* กรอบแสดงรูปสินค้าทรงโดดเด่น */}
+                  {/* กรอบแสดงรูปสินค้าโปร่งใส/ขาวเนียน ไม่เป็นแถบเทา */}
                   <View style={styles.imageWrapper}>
                     <Image source={{ uri: imageUrl }} style={styles.productImage} />
                   </View>
@@ -139,7 +140,7 @@ export default function StockScreen() {
                   </View>
                 </TouchableOpacity>
 
-                {/* แถบบุ่มจัดการสินค้าด้านล่าง */}
+                {/* แถบปุ่มจัดการสินค้า */}
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
                     style={styles.gearBtn}
@@ -158,26 +159,28 @@ export default function StockScreen() {
       </View>
 
       {/* แถบเนวิเกชั่นด้านล่าง */}
-      <View style={styles.bottomTabBar}>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
-          <Ionicons name="home-outline" size={22} color="#8A7A71" />
-          <Text style={styles.tabText}>Home</Text>
-        </TouchableOpacity>
+      <View style={styles.bottomTabBarWrapper}>
+        <View style={styles.bottomTabBar}>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
+            <Ionicons name="home-outline" size={22} color="#8A7A71" />
+            <Text style={styles.tabText}>Home</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/add-product')}>
-          <Ionicons name="add-circle-outline" size={22} color="#8A7A71" />
-          <Text style={styles.tabText}>Add</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/add-product')}>
+            <Ionicons name="add-circle-outline" size={22} color="#8A7A71" />
+            <Text style={styles.tabText}>Add</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/stock')}>
-          <Ionicons name="cube" size={22} color="#4A3525" />
-          <Text style={[styles.tabText, styles.activeTabText]}>Products</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/stock')}>
+            <Ionicons name="cube" size={22} color="#4A3525" />
+            <Text style={[styles.tabText, styles.activeTabText]}>Products</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/categories')}>
-          <Ionicons name="grid" size={22} color="#8A7A71" />
-          <Text style={styles.tabText}>Categories</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/categories')}>
+            <Ionicons name="grid" size={22} color="#8A7A71" />
+            <Text style={styles.tabText}>Categories</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -185,14 +188,32 @@ export default function StockScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F4F0' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EDE9E2' },
+  header: { backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EDE9E2' },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center',
+  },
   headerTitleContainer: { alignItems: 'center' },
   headerTitle: { fontSize: 15, fontWeight: '800', color: '#3E2723', letterSpacing: 1 },
   headerSubtitle: { fontSize: 10, color: '#8A7A71', marginTop: 2 },
   navBtn: { backgroundColor: '#F0EBE3', padding: 8, borderRadius: 12 },
   addHeaderBtn: { backgroundColor: '#4A3525', padding: 8, borderRadius: 12 },
 
-  contentBody: { flex: 1, paddingHorizontal: 20, paddingTop: 15 },
+  /* 📌 ล็อกความกว้างหน้าจอไม่ให้ยืดกว้างเกินไปบนคอม */
+  contentBody: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center',
+  },
   
   searchContainer: {
     flexDirection: 'row',
@@ -209,35 +230,35 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#4A3525', marginBottom: 15 },
 
-  /* 🎨 ดีไซน์การ์ดสินค้าใหม่ */
+  /* 🎨 ปรับการ์ดสินค้าให้สวยสมส่วน */
   columnWrapper: { justifyContent: 'space-between' },
   productCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 10,
+    borderRadius: 18,
+    padding: 12,
     marginBottom: 16,
     width: '48.5%',
     shadowColor: '#3E2723',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-    justify: 'space-between',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#F0EBE3',
+    borderColor: '#EDE9E2',
   },
   cardPressable: { width: '100%' },
   
-  /* กรอบเน้นรูปภาพสินค้า */
+  /* กรอบรูปสินค้าเปลี่ยนเป็นสีขาวเนียน ชูรูปให้เด่น */
   imageWrapper: {
     width: '100%',
-    height: 160,
-    borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    height: 180,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
-    marginBottom: 10,
+    padding: 10,
+    marginBottom: 8,
   },
   productImage: {
     width: '100%',
@@ -245,7 +266,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   
-  detailsContainer: { paddingHorizontal: 4 },
+  detailsContainer: { paddingHorizontal: 2 },
   productName: { fontSize: 13, fontWeight: '700', color: '#3E2723', marginBottom: 4, height: 34, lineHeight: 17 },
   productPrice: { fontSize: 14, color: '#8D6E63', fontWeight: '800', marginBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
@@ -266,11 +287,17 @@ const styles = StyleSheet.create({
   gearBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#F5F2EC', justifyContent: 'center', alignItems: 'center', marginRight: 4 },
   deleteBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#FFEBEE', justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
 
-  bottomTabBar: {
+  /* แถบเนวิเกชั่นล่าง ล็อกขนาดกลางจอคอม */
+  bottomTabBarWrapper: {
     position: 'absolute',
     bottom: 25,
-    left: 20,
-    right: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  bottomTabBar: {
+    width: '90%',
+    maxWidth: 860,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     height: 70,
@@ -283,7 +310,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 1,
-    borderColor: '#EDE9E2'
+    borderColor: '#EDE9E2',
   },
   tabItem: { alignItems: 'center', justifyContent: 'center', width: 65, height: 50 },
   tabText: { fontSize: 10, color: '#A19288', fontWeight: '600', marginTop: 4 },
