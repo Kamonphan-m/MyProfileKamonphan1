@@ -3,10 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Image,
   Modal,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -31,16 +33,16 @@ export default function StockScreen() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // 🛒 Cart States
+  // 🛒 Cart & Payment States
   const [cart, setCart] = useState<any[]>([]);
   const [isCartVisible, setIsCartVisible] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const apiController = new AbortController();
 
     const fetchOnlineData = async () => {
       try {
-        // ดึงข้อมูลสินค้า
         const localCache = await AsyncStorage.getItem('@lumen_products');
         if (localCache) {
           setProducts(JSON.parse(localCache));
@@ -48,7 +50,6 @@ export default function StockScreen() {
           setProducts(INITIAL_PROJECTOR_DATA);
         }
 
-        // ดึงข้อมูลตระกร้าสินค้าเดิม
         const localCart = await AsyncStorage.getItem('@lumen_cart');
         if (localCart) {
           setCart(JSON.parse(localCart));
@@ -67,17 +68,15 @@ export default function StockScreen() {
     return () => apiController.abort();
   }, []);
 
-  // บันทึก ตระกร้าลง AsyncStorage
   const saveCart = async (newCart: any[]) => {
     setCart(newCart);
     await AsyncStorage.setItem('@lumen_cart', JSON.stringify(newCart));
   };
 
-  // 🛒 ฟังก์ชันเพิ่มสินค้าลงตระกร้า
   const addToCart = (product: any) => {
     const maxStock = Number(product.stock);
     if (maxStock <= 0) {
-      Alert.alert('สินค้าหมด', 'ขออภัย สินค้านี้หมดสต็อกแล้ว');
+      showNotice('สินค้าหมด', 'ขออภัย สินค้านี้หมดสต็อกแล้ว');
       return;
     }
 
@@ -86,7 +85,7 @@ export default function StockScreen() {
 
     if (existingIndex > -1) {
       if (updatedCart[existingIndex].quantity >= maxStock) {
-        Alert.alert('จำกัดจำนวน', `คุณใส่สินค้านี้ในตระกร้าครบตามสต็อกที่มีแล้ว (${maxStock} ชิ้น)`);
+        showNotice('จำกัดจำนวน', `คุณใส่สินค้านี้ในตระกร้าครบตามสต็อกที่มีแล้ว (${maxStock} ชิ้น)`);
         return;
       }
       updatedCart[existingIndex].quantity += 1;
@@ -97,7 +96,6 @@ export default function StockScreen() {
     saveCart(updatedCart);
   };
 
-  // 🛒 ปรับจำนวนสินค้าในตระกร้า (+/-)
   const updateCartQuantity = (id: string, delta: number) => {
     const updatedCart = cart
       .map((item) => {
@@ -105,7 +103,7 @@ export default function StockScreen() {
           const newQty = item.quantity + delta;
           const maxStock = Number(item.stock);
           if (newQty > maxStock) {
-            Alert.alert('จำกัดจำนวน', `สินค้าในสต็อกมีเพียง ${maxStock} ชิ้น`);
+            showNotice('จำกัดจำนวน', `สินค้าในสต็อกมีเพียง ${maxStock} ชิ้น`);
             return item;
           }
           return { ...item, quantity: newQty };
@@ -117,28 +115,49 @@ export default function StockScreen() {
     saveCart(updatedCart);
   };
 
-  // 🛒 ระบบชำระเงิน ตัดสต็อกจริง
+  // 💳 ฟังก์ชันชำระเงิน และ หักสต็อกสินค้าจริง
   const handleCheckout = async () => {
     if (cart.length === 0) return;
 
-    // คำนวณสต็อกใหม่
-    const updatedProducts = products.map((prod) => {
-      const cartItem = cart.find((c) => c.id === prod.id);
-      if (cartItem) {
-        const remainingStock = Math.max(0, Number(prod.stock) - cartItem.quantity);
-        return { ...prod, stock: String(remainingStock) };
-      }
-      return prod;
-    });
+    setIsProcessing(true);
 
-    setProducts(updatedProducts);
-    await AsyncStorage.setItem('@lumen_products', JSON.stringify(updatedProducts));
-    
-    // ล้างตระกร้า
-    saveCart([]);
-    setIsCartVisible(false);
+    setTimeout(async () => {
+      // 1. คำนวณยอดสต็อกที่เหลือ
+      const updatedProducts = products.map((prod) => {
+        const cartItem = cart.find((c) => c.id === prod.id);
+        if (cartItem) {
+          const currentStock = Number(prod.stock) || 0;
+          const remainingStock = Math.max(0, currentStock - cartItem.quantity);
+          return { ...prod, stock: String(remainingStock) };
+        }
+        return prod;
+      });
 
-    Alert.alert('สำเร็จ! 🎉', 'ทำการสั่งซื้อสินค้าเรียบร้อยแล้ว');
+      // 2. อัปเดต State และบันทึกลง AsyncStorage
+      setProducts(updatedProducts);
+      await AsyncStorage.setItem('@lumen_products', JSON.stringify(updatedProducts));
+
+      const totalPaid = totalCartPrice.toLocaleString();
+
+      // 3. เคลียร์ตระกร้าสินค้า
+      await saveCart([]);
+      setIsProcessing(false);
+      setIsCartVisible(false);
+
+      // 4. แสดงการแจ้งเตือนความสำเร็จ
+      showNotice(
+        '🎉 ชำระเงินสำเร็จ!',
+        `รับชำระเงินจำนวน THB ${totalPaid} เรียบร้อยแล้ว\nระบบได้ทำการปรับลดสต็อกสินค้าแล้วค่ะ`
+      );
+    }, 1000);
+  };
+
+  const showNotice = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
   };
 
   const deleteProduct = async (id: string) => {
@@ -160,7 +179,6 @@ export default function StockScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ส่วนหัวแอป */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.navBtn}>
@@ -171,7 +189,6 @@ export default function StockScreen() {
             <Text style={styles.headerSubtitle}>Premium Audio & Visual</Text>
           </View>
           
-          {/* ปุ่มตระกร้าสินค้า + Badge แจ้งเตือนจำนวน */}
           <TouchableOpacity style={styles.cartHeaderBtn} onPress={() => setIsCartVisible(true)}>
             <Ionicons name="cart-outline" size={22} color="#4A3525" />
             {totalCartItems > 0 && (
@@ -184,7 +201,6 @@ export default function StockScreen() {
       </View>
 
       <View style={styles.contentBody}>
-        {/* ช่อง Search */}
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#8A7A71" style={{ marginRight: 8 }} />
           <TextInput
@@ -205,7 +221,6 @@ export default function StockScreen() {
           All Products ({filteredProducts.length})
         </Text>
         
-        {/* FlatList ปรับแต่งการ์ดขนาดสมส่วน */}
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => String(item.id)}
@@ -216,6 +231,7 @@ export default function StockScreen() {
           renderItem={({ item }) => {
             const fallbackImg = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400';
             const imageUrl = item.image && item.image.trim() !== '' ? item.image : fallbackImg;
+            const isOutOfStock = Number(item.stock) <= 0;
 
             return (
               <View style={styles.productCard}>
@@ -235,9 +251,9 @@ export default function StockScreen() {
                     <Text style={styles.productPrice}>THB {Number(item.price).toLocaleString()}</Text>
                     
                     <View style={styles.metaRow}>
-                      <View style={[styles.badge, { backgroundColor: Number(item.stock) > 0 ? '#E8F5E9' : '#FFEBEE' }]}>
-                        <Text style={[styles.badgeText, { color: Number(item.stock) > 0 ? '#2E7D32' : '#C62828' }]}>
-                          {Number(item.stock) > 0 ? 'Available' : 'Out of Stock'}
+                      <View style={[styles.badge, { backgroundColor: !isOutOfStock ? '#E8F5E9' : '#FFEBEE' }]}>
+                        <Text style={[styles.badgeText, { color: !isOutOfStock ? '#2E7D32' : '#C62828' }]}>
+                          {!isOutOfStock ? 'Available' : 'Out of Stock'}
                         </Text>
                       </View>
                       <Text style={styles.qtyText}>Stock: {item.stock}</Text>
@@ -245,11 +261,11 @@ export default function StockScreen() {
                   </View>
                 </TouchableOpacity>
 
-                {/* แถบปุ่มจัดการสินค้า + ปุ่มใส่ตระกร้า */}
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
-                    style={styles.addToCartBtn}
+                    style={[styles.addToCartBtn, isOutOfStock && { backgroundColor: '#B0BEC5' }]}
                     onPress={() => addToCart(item)}
+                    disabled={isOutOfStock}
                   >
                     <Ionicons name="cart" size={15} color="#FFF" />
                   </TouchableOpacity>
@@ -271,13 +287,13 @@ export default function StockScreen() {
         />
       </View>
 
-      {/* 🛒 Modal ตระกร้าสินค้า (Shopping Cart Modal) */}
+      {/* 🛒 Modal Shopping Cart & Payment */}
       <Modal visible={isCartVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.cartContainer}>
             <View style={styles.cartHeader}>
-              <Text style={styles.cartTitle}> Shopping Cart ({totalCartItems})</Text>
-              <TouchableOpacity onPress={() => setIsCartVisible(false)}>
+              <Text style={styles.cartTitle}>Shopping Cart ({totalCartItems})</Text>
+              <TouchableOpacity onPress={() => setIsCartVisible(false)} disabled={isProcessing}>
                 <Ionicons name="close" size={24} color="#4A3525" />
               </TouchableOpacity>
             </View>
@@ -300,13 +316,20 @@ export default function StockScreen() {
                         <Text style={styles.cartItemPrice}>THB {Number(item.price).toLocaleString()}</Text>
                       </View>
 
-                      {/* เพิ่ม / ลด จำนวน */}
                       <View style={styles.qtyControls}>
-                        <TouchableOpacity onPress={() => updateCartQuantity(item.id, -1)} style={styles.qtyBtn}>
+                        <TouchableOpacity 
+                          onPress={() => updateCartQuantity(item.id, -1)} 
+                          style={styles.qtyBtn}
+                          disabled={isProcessing}
+                        >
                           <Ionicons name="remove" size={14} color="#4A3525" />
                         </TouchableOpacity>
                         <Text style={styles.cartQtyText}>{item.quantity}</Text>
-                        <TouchableOpacity onPress={() => updateCartQuantity(item.id, 1)} style={styles.qtyBtn}>
+                        <TouchableOpacity 
+                          onPress={() => updateCartQuantity(item.id, 1)} 
+                          style={styles.qtyBtn}
+                          disabled={isProcessing}
+                        >
                           <Ionicons name="add" size={14} color="#4A3525" />
                         </TouchableOpacity>
                       </View>
@@ -314,14 +337,22 @@ export default function StockScreen() {
                   )}
                 />
 
-                {/* ส่วนสรุปราคารวม & ปุ่มชำระเงิน */}
                 <View style={styles.cartFooter}>
                   <View style={styles.totalRow}>
                     <Text style={styles.totalLabel}>ราคารวมทั้งสิ้น:</Text>
                     <Text style={styles.totalAmount}>THB {totalCartPrice.toLocaleString()}</Text>
                   </View>
-                  <TouchableOpacity style={styles.checkoutBtn} onPress={handleCheckout}>
-                    <Text style={styles.checkoutBtnText}>ดำเนินการชำระเงิน</Text>
+                  
+                  <TouchableOpacity 
+                    style={[styles.checkoutBtn, isProcessing && { backgroundColor: '#8A7A71' }]} 
+                    onPress={handleCheckout}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <ActivityIndicator color="#FFF" />
+                    ) : (
+                      <Text style={styles.checkoutBtnText}>ดำเนินการชำระเงิน</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </>
@@ -330,7 +361,6 @@ export default function StockScreen() {
         </View>
       </Modal>
 
-      {/* แถบเนวิเกชั่นด้านล่าง */}
       <View style={styles.bottomTabBarWrapper}>
         <View style={styles.bottomTabBar}>
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
@@ -426,7 +456,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
-    justify: 'space-between',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#EDE9E2',
   },
@@ -470,7 +500,6 @@ const styles = StyleSheet.create({
   gearBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#F5F2EC', justifyContent: 'center', alignItems: 'center', marginRight: 4 },
   deleteBtn: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#FFEBEE', justifyContent: 'center', alignItems: 'center' },
 
-  /* 🛒 Modal UI Styles */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   cartContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '80%' },
   cartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 15, borderBottomWidth: 1, borderColor: '#EDE9E2' },
