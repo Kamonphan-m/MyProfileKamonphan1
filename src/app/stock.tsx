@@ -217,13 +217,14 @@ export default function StockScreen() {
           All Products ({filteredProducts.length})
         </Text>
         
+        {/* FlatList กำหนด paddingBottom 140 เพื่อดันท้ายสุดพ้นเมนู */}
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => String(item.id)}
           numColumns={2}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 140, paddingTop: 5 }}
           renderItem={({ item }) => {
             const fallbackImg = 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400';
             const imageUrl = item.image && item.image.trim() !== '' ? item.image : fallbackImg;
@@ -357,7 +358,7 @@ export default function StockScreen() {
         </View>
       </Modal>
 
-      {/* Bottom Navigation Docked Cleanly at Bottom */}
+      {/* Floating Bottom Tab Bar */}
       <View style={styles.bottomTabBarWrapper}>
         <View style={styles.bottomTabBar}>
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EDE9E2' },
   headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify.content: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
@@ -517,13 +518,16 @@ const styles = StyleSheet.create({
   checkoutBtn: { backgroundColor: '#4A3525', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   checkoutBtnText: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
 
-  /* แก้ไข: ปรับแถบเมนูด้านล่างเป็น Footer ถาวร ไม่บังสินค้าอีกต่อไป */
+  /* แถบเมนูลอยแบบมีกรอบรองรับ ไม่บังสินค้าแถวล่าง */
   bottomTabBarWrapper: {
-    backgroundColor: '#F7F4F0',
-    paddingVertical: 10,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#EDE9E2',
+    paddingBottom: Platform.OS === 'ios' ? 25 : 15,
+    paddingTop: 10,
+    backgroundColor: 'rgba(247, 244, 240, 0.92)',
   },
   bottomTabBar: {
     width: '90%',
@@ -536,9 +540,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 8,
     borderWidth: 1,
     borderColor: '#EDE9E2',
   },
