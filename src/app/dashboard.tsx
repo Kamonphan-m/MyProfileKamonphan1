@@ -25,7 +25,7 @@ const LOCAL_MOCK_PRODUCTS = [
     name: "WANBO X2 Max Smart Android Projector",
     price: 5990,
     stock: 15,
-    location: "คลังสินค้า A1",
+    location: "คลังสินค้าหลัก",
     image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
   },
   {
@@ -33,7 +33,7 @@ const LOCAL_MOCK_PRODUCTS = [
     name: "WANBO Mini Projector",
     price: 3502,
     stock: 3,
-    location: "คลังสินค้า B2",
+    location: "คลังสินค้าหลัก",
     image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop"
   },
   {
@@ -41,23 +41,23 @@ const LOCAL_MOCK_PRODUCTS = [
     name: "WANBO Projector Android 9.0 / Mozart",
     price: 17590,
     stock: 2,
-    location: "หน้าร้าน",
+    location: "คลังสินค้าหลัก",
     image: "https://images.unsplash.com/photo-1601944179066-297bff591b3e?w=500&auto=format&fit=crop"
   },
   {
     id: "4",
-    name: "ACER Projector x 1328wi",
+    name: "ACER ACER Projector x 1328wi",
     price: 17390,
-    stock: 12,
-    location: "คลังสินค้า A1",
+    stock: 0,
+    location: "คลังสินค้าหลัก",
     image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=500&auto=format&fit=crop"
   },
   {
     id: "5",
-    name: "Epson Projector / EB-E24",
+    name: "Epson EPSON Projector / EB-E24",
     price: 17790,
     stock: 4,
-    location: "คลังสินค้า B2",
+    location: "คลังสินค้าหลัก",
     image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
   },
   {
@@ -65,7 +65,7 @@ const LOCAL_MOCK_PRODUCTS = [
     name: "Xiaomi Mi Smart Projector 2 Pro",
     price: 23999,
     stock: 8,
-    location: "หน้าร้าน",
+    location: "คลังสินค้าหลัก",
     image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop"
   }
 ];
@@ -110,7 +110,6 @@ export default function DashboardScreen() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // 📊 คำนวณค่าสถิติจริงจากข้อมูลโปรเจกเตอร์
   const totalItems = products.length;
   const totalStockUnits = products.reduce((sum, item) => sum + (Number(item.stock) || 0), 0);
   const lowStockProducts = products.filter(item => (Number(item.stock) || 0) <= 5);
@@ -129,7 +128,7 @@ export default function DashboardScreen() {
             LUMEN<Text style={styles.brandDot}>.OS</Text>
           </Text>
           <TouchableOpacity onPress={toggleMenu} style={styles.closeMenuBtn}>
-            <Ionicons name="close" size={22} color="#4A3525" />
+            <Ionicons name="close" size={22} color="#42362B" />
           </TouchableOpacity>
         </View>
 
@@ -152,7 +151,7 @@ export default function DashboardScreen() {
               <Ionicons
                 name={item.icon as any}
                 size={20}
-                color={item.active ? '#FFF' : '#A19288'}
+                color={item.active ? '#FFF' : '#A09385'}
                 style={styles.sidebarIcon}
               />
               <Text style={item.active ? styles.sidebarTextActive : styles.sidebarText}>
@@ -169,7 +168,7 @@ export default function DashboardScreen() {
             router.push('/login');
           }}
         >
-          <Ionicons name="log-out-outline" size={18} color="#C25A5A" style={{ marginRight: 8 }} />
+          <Ionicons name="log-out-outline" size={18} color="#D9534F" style={{ marginRight: 8 }} />
           <Text style={styles.logoutText}>Disconnect</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -182,7 +181,7 @@ export default function DashboardScreen() {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={toggleMenu} style={styles.menuTrigger}>
-            <Ionicons name="menu-outline" size={22} color="#4A3525" />
+            <Ionicons name="menu-outline" size={22} color="#42362B" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>DASHBOARD คลังโปรเจกเตอร์</Text>
           <TouchableOpacity style={styles.avatar} onPress={() => router.push('/login')}>
@@ -193,41 +192,45 @@ export default function DashboardScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
-        {/* 📌 การ์ดสรุปสถิติคลังสินค้า (คำนวณอัตโนมัติ) */}
+        {/* 📌 การ์ดสรุปสถิติคลังสินค้า (โทนสีเหลืองไข่ พาสเทล) */}
         <Text style={styles.sectionTitle}>สรุปภาพรวมคลังสินค้า</Text>
         <View style={styles.statsGridContainer}>
           
-          <View style={[styles.statBoxCard, { backgroundColor: '#1E293B' }]}>
-            <Ionicons name="cube-outline" size={20} color="#94A3B8" />
+          {/* เหลืองไข่แดงเข้ม (Warm Yolk) */}
+          <View style={[styles.statBoxCard, { backgroundColor: '#EAA43A' }]}>
+            <Ionicons name="cube-outline" size={20} color="#FFF8E7" />
             <Text style={[styles.statValueText, { color: '#FFFFFF' }]}>{totalItems}</Text>
-            <Text style={[styles.statLabelText, { color: '#94A3B8' }]}>รายการสินค้า</Text>
+            <Text style={[styles.statLabelText, { color: '#FFF3D6' }]}>รายการสินค้า</Text>
           </View>
 
-          <View style={[styles.statBoxCard, { backgroundColor: '#2563EB' }]}>
-            <Ionicons name="layers-outline" size={20} color="#BFDBFE" />
-            <Text style={[styles.statValueText, { color: '#FFFFFF' }]}>{totalStockUnits}</Text>
-            <Text style={[styles.statLabelText, { color: '#BFDBFE' }]}>จำนวนสต็อก (เครื่อง)</Text>
+          {/* เหลืองนวลพาสเทล (Soft Egg Yellow) */}
+          <View style={[styles.statBoxCard, { backgroundColor: '#F2C94C' }]}>
+            <Ionicons name="layers-outline" size={20} color="#5C4500" />
+            <Text style={[styles.statValueText, { color: '#42362B' }]}>{totalStockUnits}</Text>
+            <Text style={[styles.statLabelText, { color: '#5C4500' }]}>จำนวนสต็อก (เครื่อง)</Text>
           </View>
 
-          <View style={[styles.statBoxCard, { backgroundColor: '#DC2626' }]}>
-            <Ionicons name="alert-circle-outline" size={20} color="#FECACA" />
+          {/* ส้มอิฐอบอุ่น สำหรับแจ้งเตือน (Warm Terracotta Coral) */}
+          <View style={[styles.statBoxCard, { backgroundColor: '#E06A55' }]}>
+            <Ionicons name="alert-circle-outline" size={20} color="#FFF0EE" />
             <Text style={[styles.statValueText, { color: '#FFFFFF' }]}>{lowStockProducts.length}</Text>
-            <Text style={[styles.statLabelText, { color: '#FECACA' }]}>สต็อกใกล้หมด</Text>
+            <Text style={[styles.statLabelText, { color: '#FFE4E0' }]}>สต็อกใกล้หมด</Text>
           </View>
 
-          <View style={[styles.statBoxCard, { backgroundColor: '#059669' }]}>
-            <Ionicons name="wallet-outline" size={20} color="#A7F3D0" />
+          {/* เหลืองทองมัสตาร์ดนุ่มนวล (Golden Mustard) */}
+          <View style={[styles.statBoxCard, { backgroundColor: '#D4A24E' }]}>
+            <Ionicons name="wallet-outline" size={20} color="#FFFBF0" />
             <Text style={[styles.statValueText, { color: '#FFFFFF' }]}>฿{totalStockValue.toLocaleString()}</Text>
-            <Text style={[styles.statLabelText, { color: '#A7F3D0' }]}>มูลค่าสต็อกรวม</Text>
+            <Text style={[styles.statLabelText, { color: '#FFF5DC' }]}>มูลค่าสต็อกรวม</Text>
           </View>
 
         </View>
 
-        {/* 📌 ส่วนแสดงสินค้าใกล้หมดสต็อก (ต่ำกว่าหรือเท่ากับ 5 เครื่อง) */}
+        {/* 📌 ส่วนแสดงสินค้าใกล้หมดสต็อก */}
         <Text style={styles.sectionTitle}>โปรเจกเตอร์ใกล้หมดสต็อก (เกณฑ์ ≤ 5 เครื่อง)</Text>
         <View style={styles.lowStockBox}>
           {loading ? (
-            <ActivityIndicator size="small" color="#4A3525" />
+            <ActivityIndicator size="small" color="#EAA43A" />
           ) : lowStockProducts.length > 0 ? (
             lowStockProducts.map((item, index) => (
               <View key={item.id || index} style={styles.lowStockRow}>
@@ -249,7 +252,7 @@ export default function DashboardScreen() {
         <Text style={styles.sectionTitle}>รายการโปรเจกเตอร์ทั้งหมด (LIVE API DATA)</Text>
         <View style={styles.productListContainer}>
           {loading ? (
-            <ActivityIndicator size="small" color="#4A3525" />
+            <ActivityIndicator size="small" color="#EAA43A" />
           ) : products.length > 0 ? (
             products.map((item, index) => (
               <View key={item.id || index} style={styles.productCard}>
@@ -284,22 +287,22 @@ export default function DashboardScreen() {
       <View style={styles.bottomTabBarWrapper}>
         <View style={styles.bottomTabBar}>
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
-            <Ionicons name="home" size={22} color="#4A3525" />
+            <Ionicons name="home" size={22} color="#EAA43A" />
             <Text style={[styles.tabText, styles.activeTabText]}>Home</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/add-product')}>
-            <Ionicons name="add-circle-outline" size={22} color="#8A7A71" />
+            <Ionicons name="add-circle-outline" size={22} color="#A09385" />
             <Text style={styles.tabText}>Add</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/stock')}>
-            <Ionicons name="cube-outline" size={22} color="#8A7A71" />
+            <Ionicons name="cube-outline" size={22} color="#A09385" />
             <Text style={styles.tabText}>Products</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/categories')}>
-            <Ionicons name="grid-outline" size={22} color="#8A7A71" />
+            <Ionicons name="grid-outline" size={22} color="#A09385" />
             <Text style={styles.tabText}>Categories</Text>
           </TouchableOpacity>
         </View>
@@ -309,11 +312,11 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F4F0' },
+  container: { flex: 1, backgroundColor: '#FCF9EE' }, // พื้นหลังโทนสีเปลือกไข่นุ่มๆ
   header: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EDE9E2',
+    borderBottomColor: '#F3EED9',
   },
   headerContent: {
     flexDirection: 'row',
@@ -325,10 +328,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
-  headerTitle: { fontSize: 14, fontWeight: '800', color: '#3E2723', letterSpacing: 1 },
-  menuTrigger: { backgroundColor: '#F5F2EC', padding: 8, borderRadius: 12 },
+  headerTitle: { fontSize: 14, fontWeight: '800', color: '#42362B', letterSpacing: 1 },
+  menuTrigger: { backgroundColor: '#FAF4DF', padding: 8, borderRadius: 12 },
   avatar: {
-    backgroundColor: '#4A3525',
+    backgroundColor: '#EAA43A',
     width: 35,
     height: 35,
     borderRadius: 12,
@@ -348,13 +351,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#8A7A71',
+    color: '#8C7E72',
     marginTop: 20,
     marginBottom: 12,
     letterSpacing: 0.5,
   },
 
-  // 📊 สไตล์สำหรับการ์ดสถิติ 4 ช่อง
+  // 📊 สไตล์สำหรับการ์ดสถิติ 4 ช่อง (Egg Yellow Themes)
   statsGridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -368,10 +371,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 100,
     elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowColor: '#7A6230',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   statValueText: {
     fontSize: 22,
@@ -383,14 +386,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // ⚠️ สไตล์สำหรับรายการสินค้าใกล้หมด
+  // ⚠️ ป้ายเตือนในธีมส้ม-เหลืองพาสเทล
   lowStockBox: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#EDE9E2',
+    borderColor: '#F3EED9',
   },
   lowStockRow: {
     flexDirection: 'row',
@@ -398,41 +401,43 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F2EC',
+    borderBottomColor: '#FAF6E6',
   },
   lowStockName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#3E2723',
+    color: '#42362B',
   },
   lowStockSubText: {
     fontSize: 10,
-    color: '#A19288',
+    color: '#A09385',
     marginTop: 2,
   },
   badgeWarn: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#FFF4E5',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFD8B5',
   },
   badgeWarnText: {
-    color: '#FFF',
+    color: '#E06A55',
     fontSize: 11,
     fontWeight: '800',
   },
 
-  // 📦 รายการสินค้าแบบเดิม
+  // 📦 รายการสินค้า
   productListContainer: { marginTop: 4 },
   productCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#EDE9E2',
+    borderColor: '#F3EED9',
   },
   productImage: {
     width: 45,
@@ -441,11 +446,11 @@ const styles = StyleSheet.create({
     marginRight: 12,
     backgroundColor: '#FFF',
   },
-  productName: { fontSize: 13, fontWeight: '700', color: '#3E2723' },
-  productPrice: { fontSize: 11, color: '#8D6E63', marginTop: 3, fontWeight: '600' },
+  productName: { fontSize: 13, fontWeight: '700', color: '#42362B' },
+  productPrice: { fontSize: 11, color: '#998675', marginTop: 3, fontWeight: '600' },
   
   idBadge: {
-    backgroundColor: '#F5F2EC',
+    backgroundColor: '#FAF4DF',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
@@ -453,10 +458,10 @@ const styles = StyleSheet.create({
   idBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#8A7A71',
+    color: '#8C7E72',
   },
 
-  noDataText: { textAlign: 'center', color: '#A19288', marginVertical: 14, fontSize: 12 },
+  noDataText: { textAlign: 'center', color: '#A09385', marginVertical: 14, fontSize: 12 },
 
   // 📌 Floating TabBar
   bottomTabBarWrapper: {
@@ -476,17 +481,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    shadowColor: '#3E2723',
+    shadowColor: '#5C4827',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 1,
-    borderColor: '#EDE9E2',
+    borderColor: '#F3EED9',
   },
   tabItem: { alignItems: 'center', justifyContent: 'center', width: 65, height: 50 },
-  tabText: { fontSize: 10, color: '#A19288', fontWeight: '600', marginTop: 4 },
-  activeTabText: { color: '#4A3525', fontWeight: '800' },
+  tabText: { fontSize: 10, color: '#A09385', fontWeight: '600', marginTop: 4 },
+  activeTabText: { color: '#EAA43A', fontWeight: '800' },
   
   // 🚪 Sidebar Styles
   sidebar: {
@@ -495,7 +500,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '75%',
     maxWidth: 320,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     padding: 24,
     zIndex: 100,
     shadowColor: '#000',
@@ -509,11 +514,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F2EC',
+    borderBottomColor: '#FAF4DF',
   },
-  sidebarLogo: { fontSize: 16, fontWeight: '900', color: '#3E2723', letterSpacing: 2 },
-  brandDot: { color: '#8D6E63' },
-  closeMenuBtn: { backgroundColor: '#F5F2EC', padding: 6, borderRadius: 10 },
+  sidebarLogo: { fontSize: 16, fontWeight: '900', color: '#42362B', letterSpacing: 2 },
+  brandDot: { color: '#EAA43A' },
+  closeMenuBtn: { backgroundColor: '#FAF4DF', padding: 6, borderRadius: 10 },
   sidebarMenu: { marginTop: 24 },
   sidebarItem: {
     flexDirection: 'row',
@@ -523,9 +528,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 8,
   },
-  sidebarItemActive: { backgroundColor: '#4A3525' },
+  sidebarItemActive: { backgroundColor: '#EAA43A' },
   sidebarIcon: { marginRight: 14 },
-  sidebarText: { color: '#8A7A71', fontSize: 14, fontWeight: '600' },
+  sidebarText: { color: '#8C7E72', fontSize: 14, fontWeight: '600' },
   sidebarTextActive: { color: '#FFF', fontSize: 14, fontWeight: '700' },
   
   logoutButton: {
@@ -534,21 +539,21 @@ const styles = StyleSheet.create({
     left: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF5F5',
+    backgroundColor: '#FFF0EE',
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: '#FFE4E0',
   },
-  logoutText: { color: '#C25A5A', fontSize: 13, fontWeight: '700' },
+  logoutText: { color: '#D9534F', fontSize: 13, fontWeight: '700' },
   overlay: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(62, 39, 35, 0.4)',
+    backgroundColor: 'rgba(66, 54, 43, 0.35)',
     zIndex: 90,
   },
 });
