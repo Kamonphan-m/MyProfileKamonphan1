@@ -29,34 +29,49 @@ interface CartItem {
   stock: number;
 }
 
+// 📦 ข้อมูลสินค้าทั้ง 6 รายการตามรูปภาพ
 const INITIAL_MOCK_PRODUCTS = [
   {
     id: "1",
-    name: "Wando WANO X2 Max Smart Android Projector",
+    name: "WANBO X2 Max Smart Android Projector",
     price: 5990,
     stock: 15,
     image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
   },
   {
     id: "2",
-    name: "Wando WANDO Mini Projector",
+    name: "WANBO Mini Projector",
     price: 3502,
     stock: 10,
     image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop"
   },
   {
     id: "3",
-    name: "Wando WANDO Projector Mozart",
+    name: "WANBO Projector Android 9.0 / Mozart",
     price: 17590,
-    stock: 2,
+    stock: 5,
     image: "https://images.unsplash.com/photo-1601944179066-297bff591b3e?w=500&auto=format&fit=crop"
   },
   {
     id: "4",
-    name: "ACER Projector x 1328wi",
+    name: "ACER ACER Projector x 1328wi",
     price: 17390,
-    stock: 15,
+    stock: 12,
     image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=500&auto=format&fit=crop"
+  },
+  {
+    id: "5",
+    name: "Epson EPSON Projector / EB-E24",
+    price: 17790,
+    stock: 8,
+    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
+  },
+  {
+    id: "6",
+    name: "Xiaomi Mi Smart Projector 2 Pro",
+    price: 23999,
+    stock: 6,
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500&auto=format&fit=crop"
   }
 ];
 
@@ -70,43 +85,27 @@ export default function StockScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // ฟังก์ชันดึงข้อมูลสินค้า (รองรับทั้ง API และ AsyncStorage)
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // 1. ลองดึงจาก API ก่อน
+
+      // 1. ลองเรียกจาก API ดูก่อน
       const response = await fetch(`${API_BASE_URL}/products`);
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
           setProducts(data);
-          // บันทึกลง AsyncStorage สำรองไว้
           await AsyncStorage.setItem('local_products', JSON.stringify(data));
           return;
         }
       }
 
-      // 2. ถ้า API ล้มเหลว ให้ดึงจาก AsyncStorage ที่เคยเซฟไว้
-      const savedProducts = await AsyncStorage.getItem('local_products');
-      if (savedProducts) {
-        setProducts(JSON.parse(savedProducts));
-      } else {
-        setProducts(INITIAL_MOCK_PRODUCTS);
-        await AsyncStorage.setItem('local_products', JSON.stringify(INITIAL_MOCK_PRODUCTS));
-      }
+      // 2. ถ้า API ไม่มีข้อมูล ให้ใช้ 6 รายการตามภาพ
+      setProducts(INITIAL_MOCK_PRODUCTS);
+      await AsyncStorage.setItem('local_products', JSON.stringify(INITIAL_MOCK_PRODUCTS));
     } catch {
-      // 3. กรณี Offline / เกิด Error ดึงจาก local_products
-      try {
-        const savedProducts = await AsyncStorage.getItem('local_products');
-        if (savedProducts) {
-          setProducts(JSON.parse(savedProducts));
-        } else {
-          setProducts(INITIAL_MOCK_PRODUCTS);
-        }
-      } catch {
-        setProducts(INITIAL_MOCK_PRODUCTS);
-      }
+      // 3. เกิด Error ให้ดึงข้อมูลสำรอง 6 รายการมาแสดงทันที
+      setProducts(INITIAL_MOCK_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -116,7 +115,7 @@ export default function StockScreen() {
     fetchProducts();
   }, [fetchProducts]);
 
-  // 🛒 ระบบจัดการตะกร้าสินค้า
+  // 🛒 ระบบเพิ่มสินค้าลงตะกร้า
   const addToCart = (product: any) => {
     if (product.stock <= 0) {
       Alert.alert('สินค้าหมด', 'สินค้ารายการนี้หมดสต็อกแล้ว');
