@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -28,7 +29,7 @@ interface CartItem {
   stock: number;
 }
 
-const LOCAL_MOCK_PRODUCTS = [
+const INITIAL_MOCK_PRODUCTS = [
   {
     id: "1",
     name: "Wando WANO X2 Max Smart Android Projector",
@@ -69,29 +70,53 @@ export default function StockScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const fetchProducts = async () => {
+  // ฟังก์ชันดึงข้อมูลสินค้า (รองรับทั้ง API และ AsyncStorage)
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // 1. ลองดึงจาก API ก่อน
       const response = await fetch(`${API_BASE_URL}/products`);
-      if (!response.ok) throw new Error('API Error');
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setProducts(data);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+          // บันทึกลง AsyncStorage สำรองไว้
+          await AsyncStorage.setItem('local_products', JSON.stringify(data));
+          return;
+        }
+      }
+
+      // 2. ถ้า API ล้มเหลว ให้ดึงจาก AsyncStorage ที่เคยเซฟไว้
+      const savedProducts = await AsyncStorage.getItem('local_products');
+      if (savedProducts) {
+        setProducts(JSON.parse(savedProducts));
       } else {
-        setProducts(LOCAL_MOCK_PRODUCTS);
+        setProducts(INITIAL_MOCK_PRODUCTS);
+        await AsyncStorage.setItem('local_products', JSON.stringify(INITIAL_MOCK_PRODUCTS));
       }
     } catch {
-      setProducts(LOCAL_MOCK_PRODUCTS);
+      // 3. กรณี Offline / เกิด Error ดึงจาก local_products
+      try {
+        const savedProducts = await AsyncStorage.getItem('local_products');
+        if (savedProducts) {
+          setProducts(JSON.parse(savedProducts));
+        } else {
+          setProducts(INITIAL_MOCK_PRODUCTS);
+        }
+      } catch {
+        setProducts(INITIAL_MOCK_PRODUCTS);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
-  // 🛒 จัดการตะกร้าสินค้า
+  // 🛒 ระบบจัดการตะกร้าสินค้า
   const addToCart = (product: any) => {
     if (product.stock <= 0) {
       Alert.alert('สินค้าหมด', 'สินค้ารายการนี้หมดสต็อกแล้ว');
@@ -113,7 +138,7 @@ export default function StockScreen() {
         return [
           ...prevCart,
           {
-            id: product.id,
+            id: String(product.id),
             name: product.name,
             price: Number(product.price) || 0,
             image: product.image || product.image_url || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400',
@@ -156,16 +181,18 @@ export default function StockScreen() {
         { text: 'ยกเลิก', style: 'cancel' },
         {
           text: 'ยืนยันสั่งซื้อ',
-          onPress: () => {
-            setProducts((prev) =>
-              prev.map((prod) => {
-                const itemInCart = cart.find((c) => c.id === prod.id);
-                if (itemInCart) {
-                  return { ...prod, stock: prod.stock - itemInCart.quantity };
-                }
-                return prod;
-              })
-            );
+          onPress: async () => {
+            const updatedProducts = products.map((prod) => {
+              const itemInCart = cart.find((c) => String(c.id) === String(prod.id));
+              if (itemInCart) {
+                return { ...prod, stock: Math.max(0, prod.stock - itemInCart.quantity) };
+              }
+              return prod;
+            });
+
+            setProducts(updatedProducts);
+            await AsyncStorage.setItem('local_products', JSON.stringify(updatedProducts));
+
             setCart([]);
             setIsCartOpen(false);
             Alert.alert('สั่งซื้อสำเร็จ! 🎉', 'ระบบทำการบันทึกรายการเรียบร้อยแล้ว');
