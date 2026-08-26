@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   FlatList,
   Platform,
@@ -10,17 +11,45 @@ import {
   View,
 } from 'react-native';
 
+// ดึงข้อมูลสินค้าสำรองจากไฟล์ products.json
+import localProducts from '../../products.json';
+
 const PROJECTOR_CATEGORIES = [
-  { id: '1', name: 'Cozy Home Cinema', itemsCount: '2 items', icon: 'film-outline' },
-  { id: '2', name: 'Mini & Portable', itemsCount: '1 item', icon: 'videocam-outline' },
-  { id: '3', name: 'Office & Education', itemsCount: '2 items', icon: 'easel-outline' },
-  { id: '4', name: '4K Ultra HD Premium', itemsCount: '0 items', icon: 'tv-outline' },
-  { id: '5', name: 'Pro Gaming Station', itemsCount: '0 items', icon: 'game-controller-outline' },
-  { id: '6', name: 'Accessories & Screens', itemsCount: '0 items', icon: 'hardware-chip-outline' },
+  { id: '1', name: 'Cozy Home Cinema', icon: 'film-outline' },
+  { id: '2', name: 'Mini & Portable', icon: 'videocam-outline' },
+  { id: '3', name: 'Office & Education', icon: 'easel-outline' },
+  { id: '4', name: '4K Ultra HD Premium', icon: 'tv-outline' },
+  { id: '5', name: 'Pro Gaming Station', icon: 'game-controller-outline' },
+  { id: '6', name: 'Accessories & Screens', icon: 'hardware-chip-outline' },
 ];
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('http://119.59.102.161:3005/api/products');
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+          return;
+        }
+      }
+      setProducts(localProducts);
+    } catch {
+      setProducts(localProducts);
+    }
+  };
+
+  const getCategoryCount = (categoryName: string) => {
+    return products.filter((item) => item.category === categoryName).length;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -46,27 +75,32 @@ export default function CategoriesScreen() {
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.categoryCard}
-              onPress={() => router.push('/stock')}
-            >
-              <View style={styles.iconContainer}>
-                <Ionicons name={item.icon as any} size={20} color="#8D6E63" />
-              </View>
+          renderItem={({ item }) => {
+            const count = getCategoryCount(item.name);
+            return (
+              <TouchableOpacity
+                style={styles.categoryCard}
+                onPress={() => router.push(`/stock?category=${encodeURIComponent(item.name)}` as any)}
+              >
+                <View style={styles.iconContainer}>
+                  <Ionicons name={item.icon as any} size={20} color="#8D6E63" />
+                </View>
 
-              <View style={styles.textContainer}>
-                <Text style={styles.categoryName}>{item.name}</Text>
-                <Text style={styles.itemsCount}>{item.itemsCount}</Text>
-              </View>
+                <View style={styles.textContainer}>
+                  <Text style={styles.categoryName}>{item.name}</Text>
+                  <Text style={styles.itemsCount}>
+                    {count} {count === 1 ? 'item' : 'items'}
+                  </Text>
+                </View>
 
-              <Ionicons name="chevron-forward" size={16} color="#A19288" />
-            </TouchableOpacity>
-          )}
+                <Ionicons name="chevron-forward" size={16} color="#A19288" />
+              </TouchableOpacity>
+            );
+          }}
         />
       </View>
 
-      {/* แถบเนวิเกชั่นด้านล่าง กระจายตัวเต็มความกว้างตรงตามรูปที่ 2 */}
+      {/* แถบเนวิเกชั่นด้านล่าง */}
       <View style={styles.bottomTabBarWrapper}>
         <View style={styles.bottomTabBar}>
           <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/dashboard')}>
@@ -114,7 +148,7 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 12,
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
   },
   avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 11 },
@@ -160,7 +194,7 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 14,
     backgroundColor: '#F5F2EC',
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
     marginRight: 15,
   },
@@ -168,7 +202,6 @@ const styles = StyleSheet.create({
   categoryName: { fontSize: 14, fontWeight: '700', color: '#3E2723' },
   itemsCount: { fontSize: 11, color: '#A19288', marginTop: 3, fontWeight: '600' },
 
-  /* ส่วนแถบเนวิเกชั่นลอยด้านล่าง */
   bottomTabBarWrapper: {
     position: 'absolute',
     bottom: 0,
@@ -197,9 +230,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   tabItem: {
-    flex: 1, // กระจายพื้นที่เท่าๆ กันทั้ง 4 ปุ่ม
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justify: 'center',
     height: '100%',
   },
   tabText: { fontSize: 10, color: '#A19288', fontWeight: '600', marginTop: 4 },
