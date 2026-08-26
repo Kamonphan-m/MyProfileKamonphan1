@@ -93,6 +93,22 @@ export default function DashboardScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // 🛠️ ฟังก์ชันแปลงข้อมูลสินค้าให้เป็น Format เดียวกัน (รองรับกรณี DB ใช้ชื่อ field ไม่ตรงกัน)
+  const formatProductsData = (rawData: any[]) => {
+    return rawData.map((item) => ({
+      ...item,
+      // ดึงค่าสต็อก แม้ว่าใน API/DB จะใช้ชื่อ stock, stock_quantity, quantity หรือ qty
+      stock: Number(
+        item.stock ?? 
+        item.stock_quantity ?? 
+        item.quantity ?? 
+        item.qty ?? 
+        0
+      ),
+      price: Number(item.price ?? 0),
+    }));
+  };
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -101,12 +117,14 @@ export default function DashboardScreen() {
       
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
-        setProducts(data);
+        setProducts(formatProductsData(data));
       } else {
-        setProducts(localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS);
+        const fallback = localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS;
+        setProducts(formatProductsData(fallback));
       }
     } catch (error) {
-      setProducts(localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS);
+      const fallback = localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS;
+      setProducts(formatProductsData(fallback));
     } finally {
       setLoading(false);
     }
