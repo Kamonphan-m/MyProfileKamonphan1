@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -21,11 +21,12 @@ const PRODUCTS_URL =
   'https://raw.githubusercontent.com/Kamonphan-m/MyProfileKamonphan1/master/products.json';
 
 const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: '5990', stock: '5', image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400' },
-  { id: '2', name: 'WANBO Mini Projector', price: '3502', stock: '10', image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=400' },
-  { id: '3', name: 'WANBO Projector Android 9.0 / Mozart', price: '17590', stock: '15', image: 'https://images.unsplash.com/photo-1601987177651-8edfe6c20009?q=80&w=400' },
-  { id: '4', name: 'ACER Projector x 1328Wi', price: '17390', stock: '15', image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400' },
-  { id: '5', name: 'Epson Projector / EB-E24', price: '17790', stock: '25', image: 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=400' }
+  { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: 5990, stock: 15, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400' },
+  { id: '2', name: 'WANBO Mini Projector', price: 3502, stock: 3, image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=400' },
+  { id: '3', name: 'WANBO Projector Android 9.0 / Mozart', price: 17590, stock: 2, image: 'https://images.unsplash.com/photo-1601987177651-8edfe6c20009?q=80&w=400' },
+  { id: '4', name: 'ACER Projector x 1328Wi', price: 17390, stock: 5, image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400' },
+  { id: '5', name: 'Epson Projector / EB-E24', price: 17790, stock: 4, image: 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=400' },
+  { id: '6', name: 'Xiaomi Mi Smart Projector 2 Pro', price: 23999, stock: 8, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop' }
 ];
 
 export default function StockScreen() {
@@ -37,35 +38,71 @@ export default function StockScreen() {
   const [isCartVisible, setIsCartVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    const apiController = new AbortController();
+  // 🛠️ แปลง Data format ให้ stock และ price เป็นตัวเลขเสมอ
+  const normalizeProducts = (rawData: any[]) => {
+    return rawData.map((item) => ({
+      ...item,
+      id: String(item.id),
+      name: item.name || 'Unknown Product',
+      price: Number(item.price ?? 0),
+      stock: Number(item.stock ?? item.stock_quantity ?? item.quantity ?? item.qty ?? 0),
+      image: item.image || item.image_url || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400',
+    }));
+  };
 
-    const fetchOnlineData = async () => {
-      try {
-        const localCache = await AsyncStorage.getItem('@lumen_products');
-        if (localCache) {
-          setProducts(JSON.parse(localCache));
-        } else {
-          setProducts(INITIAL_PROJECTOR_DATA);
-        }
-
-        const localCart = await AsyncStorage.getItem('@lumen_cart');
-        if (localCart) {
-          setCart(JSON.parse(localCart));
-        }
-
-        const res = await fetch(PRODUCTS_URL, { signal: apiController.signal });
-        if (!res.ok) throw new Error('Fetch status error');
-        
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
-        console.log('Fetch handled gracefully');
+  const loadData = async () => {
+    try {
+      // 1. ดึง Cart
+      const localCart = await AsyncStorage.getItem('@lumen_cart');
+      if (localCart) {
+        setCart(JSON.parse(localCart));
       }
-    };
 
-    void fetchOnlineData();
-    return () => apiController.abort();
-  }, []);
+      // 2. ดึง Products จาก Cache ก่อน
+      const localCache = await AsyncStorage.getItem('@lumen_products');
+      if (localCache) {
+        const parsed = JSON.parse(localCache);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProducts(normalizeProducts(parsed));
+          return;
+        }
+      }
+
+      // 3. ดึงจาก Online API ถ้ายังไม่มี Cache
+      const res = await fetch(PRODUCTS_URL);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const formatted = normalizeProducts(data);
+          setProducts(formatted);
+          await AsyncStorage.setItem('@lumen_products', JSON.stringify(formatted));
+          return;
+        }
+      }
+
+      // 4. Fallback ใช้ INITIAL_PROJECTOR_DATA
+      const formattedInitial = normalizeProducts(INITIAL_PROJECTOR_DATA);
+      setProducts(formattedInitial);
+      await AsyncStorage.setItem('@lumen_products', JSON.stringify(formattedInitial));
+    } catch (err) {
+      console.log('Load stock error:', err);
+      const formattedInitial = normalizeProducts(INITIAL_PROJECTOR_DATA);
+      setProducts(formattedInitial);
+    }
+  };
+
+  // โหลดข้อมูลใหม่ทุกครั้งที่สลับกลับมาหน้า Stock
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
+
+  const saveProducts = async (updatedList: any[]) => {
+    const formatted = normalizeProducts(updatedList);
+    setProducts(formatted);
+    await AsyncStorage.setItem('@lumen_products', JSON.stringify(formatted));
+  };
 
   const saveCart = async (newCart: any[]) => {
     setCart(newCart);
@@ -79,7 +116,7 @@ export default function StockScreen() {
       return;
     }
 
-    const existingIndex = cart.findIndex((item) => item.id === product.id);
+    const existingIndex = cart.findIndex((item) => String(item.id) === String(product.id));
     let updatedCart = [...cart];
 
     if (existingIndex > -1) {
@@ -98,7 +135,7 @@ export default function StockScreen() {
   const updateCartQuantity = (id: string, delta: number) => {
     const updatedCart = cart
       .map((item) => {
-        if (item.id === id) {
+        if (String(item.id) === String(id)) {
           const newQty = item.quantity + delta;
           const maxStock = Number(item.stock);
           if (newQty > maxStock) {
@@ -120,21 +157,20 @@ export default function StockScreen() {
     setIsProcessing(true);
 
     setTimeout(async () => {
+      // หักสต็อกสินค้าคงเหลือ
       const updatedProducts = products.map((prod) => {
-        const cartItem = cart.find((c) => c.id === prod.id);
+        const cartItem = cart.find((c) => String(c.id) === String(prod.id));
         if (cartItem) {
           const currentStock = Number(prod.stock) || 0;
           const remainingStock = Math.max(0, currentStock - cartItem.quantity);
-          return { ...prod, stock: String(remainingStock) };
+          return { ...prod, stock: remainingStock };
         }
         return prod;
       });
 
-      setProducts(updatedProducts);
-      await AsyncStorage.setItem('@lumen_products', JSON.stringify(updatedProducts));
+      await saveProducts(updatedProducts);
 
       const totalPaid = totalCartPrice.toLocaleString();
-
       await saveCart([]);
       setIsProcessing(false);
       setIsCartVisible(false);
@@ -155,13 +191,8 @@ export default function StockScreen() {
   };
 
   const deleteProduct = async (id: string) => {
-    try {
-      const updatedList = products.filter(item => item.id !== id);
-      setProducts(updatedList);
-      await AsyncStorage.setItem('@lumen_products', JSON.stringify(updatedList));
-    } catch (error) {
-      console.error(error);
-    }
+    const updatedList = products.filter(item => String(item.id) !== String(id));
+    await saveProducts(updatedList);
   };
 
   const filteredProducts = products.filter(item =>
@@ -303,7 +334,7 @@ export default function StockScreen() {
               <>
                 <FlatList
                   data={cart}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={(item) => String(item.id)}
                   renderItem={({ item }) => (
                     <View style={styles.cartItemRow}>
                       <Image source={{ uri: item.image }} style={styles.cartItemImg} />
@@ -534,7 +565,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 65,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justify.content: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 4 },
