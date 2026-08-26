@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -38,7 +38,6 @@ export default function StockScreen() {
   const [isCartVisible, setIsCartVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 🛠️ แปลง Data format ให้ stock และ price เป็นตัวเลขเสมอ
   const normalizeProducts = (rawData: any[]) => {
     return rawData.map((item) => ({
       ...item,
@@ -52,13 +51,11 @@ export default function StockScreen() {
 
   const loadData = async () => {
     try {
-      // 1. ดึง Cart
       const localCart = await AsyncStorage.getItem('@lumen_cart');
       if (localCart) {
         setCart(JSON.parse(localCart));
       }
 
-      // 2. ดึง Products จาก Cache ก่อน
       const localCache = await AsyncStorage.getItem('@lumen_products');
       if (localCache) {
         const parsed = JSON.parse(localCache);
@@ -68,7 +65,6 @@ export default function StockScreen() {
         }
       }
 
-      // 3. ดึงจาก Online API ถ้ายังไม่มี Cache
       const res = await fetch(PRODUCTS_URL);
       if (res.ok) {
         const data = await res.json();
@@ -80,7 +76,6 @@ export default function StockScreen() {
         }
       }
 
-      // 4. Fallback ใช้ INITIAL_PROJECTOR_DATA
       const formattedInitial = normalizeProducts(INITIAL_PROJECTOR_DATA);
       setProducts(formattedInitial);
       await AsyncStorage.setItem('@lumen_products', JSON.stringify(formattedInitial));
@@ -91,7 +86,6 @@ export default function StockScreen() {
     }
   };
 
-  // โหลดข้อมูลใหม่ทุกครั้งที่สลับกลับมาหน้า Stock
   useFocusEffect(
     useCallback(() => {
       loadData();
@@ -157,7 +151,6 @@ export default function StockScreen() {
     setIsProcessing(true);
 
     setTimeout(async () => {
-      // หักสต็อกสินค้าคงเหลือ
       const updatedProducts = products.map((prod) => {
         const cartItem = cart.find((c) => String(c.id) === String(prod.id));
         if (cartItem) {
@@ -226,7 +219,7 @@ export default function StockScreen() {
         </View>
       </View>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <View style={styles.contentBody}>
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#8A7A71" style={{ marginRight: 8 }} />
@@ -565,7 +558,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 65,
     flexDirection: 'row',
-    justify.content: 'space-around',
+    justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#3E2723',
     shadowOffset: { width: 0, height: 4 },
