@@ -3,30 +3,35 @@
     "id": "1",
     "name": "WANBO X2 Max Smart Android Projector",
     "price": "5990",
-    "image": "https://toyo.lk/wp-content/uploads/2025/12/Wanbo-X2-Max-Fully-Automatic-Android-1080P-Smart-Projector-2.jpg"
+    "stock": 10,
+    "image": "https://toyo.lk/wp-content/uploads/2024/02/Wanbo-X2-Max-Projector-1.jpg"
   },
   {
     "id": "2",
     "name": "WANBO Mini Projector",
     "price": "3502",
-    "image": "https://s3.zoommer.ge/zoommer-images/thumbs/0166256_wanbo-x1-mini-projector-yellow_550.jpeg"
+    "stock": 5,
+    "image": "https://s3.zoommer.ge/zoommer-images/thumbs/0178345_wanbo-mini-projector-yellow_550.jpeg"
   },
   {
     "id": "3",
     "name": "WANBO Projector Android 9.0 / Mozart",
     "price": "17590",
-    "image": "https://reimg-teknosa-cloud-prod.mncdn.com/mnresize/600/600/productimage/780940232/780940232_0_MC/e8fc8b6347914c698018e1960de4a46c.jpg"
+    "stock": 2,
+    "image": "https://reimg-teknosa-cloud-prod.mncdn.com/mnresize/600/600/productimages/125078589/125078589_0_MC.jpg"
   },
   {
     "id": "4",
     "name": "ACER ACER Projector x 1328wi",
     "price": "17390",
-    "image": "https://www.siamprojector.com/wp-content/uploads/2025/07/X-1328Wi-wifi.webp"
+    "stock": 8,
+    "image": "https://www.siamprojector.com/wp-content/uploads/2021/04/ACER-X1328Wi.jpg"
   },
   {
     "id": "5",
     "name": "Xiaomi Mi Smart Projector 2 Pro",
     "price": "23999",
-    "image": "https://tse1.mm.bing.net/th/id/OIP.Q0jp8o5qxqAmrz73gGZigAHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3"
+    "stock": 12,
+    "image": "https://tse1.mm.bing.net/th/id/OIP.Q0j4rR"
   }
 ]
