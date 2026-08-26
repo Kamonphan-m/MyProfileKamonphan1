@@ -97,7 +97,97 @@ app.post('/api/products', async (req, res) => {
 });
 
 // ==========================================
-// 5. สั่งรัน Server (ไว้ล่างสุดเสมอ)
+// 5. API สั่งซื้อสินค้าและตัดสต็อกในฐานข้อมูล (Checkout)
+// ==========================================
+app.post('/api/checkout', async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'ไม่มีรายการสินค้าในตะกร้า' });
+    }
+
+    for (const item of items) {
+      const qty = item.quantity || 1;
+      const sql = `
+        UPDATE ${PRODUCTS_TABLE} 
+        SET stock = stock - ?, lastUpdate = NOW() 
+        WHERE id = ? AND stock >= ?
+      `;
+      const [result] = await connection.query(sql, [qty, item.id, qty]);
+
+      if (result.affectedRows === 0) {
+        throw new Error(`สินค้า ID: ${item.id} สต็อกไม่พอ หรือไม่พบสินค้า`);
+      }
+    }
+
+    await connection.commit();
+    return res.json({ success: true, message: 'สั่งซื้อสำเร็จและตัดสต็อกเรียบร้อยแล้ว!' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Checkout Error:', error);
+    return res.status(500).json({ error: error.message || 'ไม่สามารถทำรายการสั่งซื้อได้' });
+  } finally {
+    connection.release();
+  }
+});
+
+// ==========================================
+// 6. API แก้ไขสินค้า / ปรับจำนวนสต็อก (PUT)
+// ==========================================
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stock, price, name, category, image, status } = req.body;
+
+    const sql = `
+      UPDATE ${PRODUCTS_TABLE} 
+      SET stock = COALESCE(?, stock),
+          price = COALESCE(?, price),
+          name = COALESCE(?, name),
+          category = COALESCE(?, category),
+          image = COALESCE(?, image),
+          status = COALESCE(?, status),
+          lastUpdate = NOW()
+      WHERE id = ?
+    `;
+
+    const [result] = await pool.query(sql, [stock, price, name, category, image, status, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'ไม่พบสินค้าที่ต้องการแก้ไข' });
+    }
+
+    return res.json({ success: true, message: 'อัปเดตข้อมูลสินค้าเรียบร้อยแล้ว!' });
+  } catch (error) {
+    console.error('Update product error:', error);
+    return res.status(500).json({ error: 'ไม่สามารถอัปเดตสินค้าได้: ' + error.message });
+  }
+});
+
+// ==========================================
+// 7. API ลบสินค้า (DELETE)
+// ==========================================
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await pool.query(`DELETE FROM ${PRODUCTS_TABLE} WHERE id = ?`, [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'ไม่พบสินค้าที่ต้องการลบ' });
+    }
+
+    return res.json({ success: true, message: 'ลบสินค้าเรียบร้อยแล้ว!' });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    return res.status(500).json({ error: 'ไม่สามารถลบสินค้าได้: ' + error.message });
+  }
+});
+
+// ==========================================
+// 8. สั่งรัน Server (ไว้ล่างสุดเสมอ)
 // ==========================================
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
