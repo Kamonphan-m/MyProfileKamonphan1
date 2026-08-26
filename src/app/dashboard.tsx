@@ -307,7 +307,7 @@ export default function DashboardScreen() {
             <Ionicons name="menu-outline" size={22} color="#42362B" />
           </TouchableOpacity>
           
-          <Text style={styles.headerTitle}>DASHBOARD คลังโปรเจกเตอร์</Text>
+          <Text style={styles.headerTitle}>DASHBOARD </Text>
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {/* 🛒 ปุ่มตะกร้าสินค้าพร้อม Badge */}
@@ -355,32 +355,6 @@ export default function DashboardScreen() {
             <Text style={[styles.statValueText, { color: '#FFFFFF' }]}>฿{totalStockValue.toLocaleString()}</Text>
             <Text style={[styles.statLabelText, { color: '#FFF5DC' }]}>มูลค่าสต็อกรวม</Text>
           </View>
-        </View>
-
-        {/* 📌 ส่วนแสดงสินค้าใกล้หมดสต็อก */}
-        <Text style={styles.sectionTitle}>โปรเจกเตอร์ใกล้หมดสต็อก (เกณฑ์ ≤ 5 เครื่อง)</Text>
-        <View style={styles.lowStockBox}>
-          {loading ? (
-            <ActivityIndicator size="small" color="#EAA43A" />
-          ) : lowStockProducts.length > 0 ? (
-            lowStockProducts.map((item, index) => (
-              <View key={item.id || index} style={styles.lowStockRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.lowStockName} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.lowStockSubText}>{item.location || 'คลังสินค้าหลัก'}</Text>
-                </View>
-                <TouchableOpacity 
-                  style={styles.badgeWarnBtn} 
-                  onPress={() => addToCart(item)}
-                >
-                  <Ionicons name="add-outline" size={14} color="#E06A55" style={{ marginRight: 2 }} />
-                  <Text style={styles.badgeWarnText}>{item.stock ?? 0} เครื่อง</Text>
-                </TouchableOpacity>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noDataText}>ไม่มีโปรเจกเตอร์ที่สต็อกใกล้หมด</Text>
-          )}
         </View>
 
         {/* 📌 รายการโปรเจกเตอร์ทั้งหมดในระบบ (กดเพิ่มใส่ตะกร้าได้) */}
