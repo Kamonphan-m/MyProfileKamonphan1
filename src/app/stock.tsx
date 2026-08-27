@@ -16,38 +16,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-const PRODUCTS_URL =
-  'https://raw.githubusercontent.com/Kamonphan-m/MyProfileKamonphan1/master/products.json';
-
-const INITIAL_PROJECTOR_DATA = [
-  { id: '1', name: 'WANBO X2 Max Smart Android Projector', price: 5990, stock: 15, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400' },
-  { id: '2', name: 'WANBO Mini Projector', price: 3502, stock: 3, image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=400' },
-  { id: '3', name: 'WANBO Projector Android 9.0 / Mozart', price: 17590, stock: 2, image: 'https://images.unsplash.com/photo-1601987177651-8edfe6c20009?q=80&w=400' },
-  { id: '4', name: 'ACER Projector x 1328Wi', price: 17390, stock: 5, image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400' },
-  { id: '5', name: 'Epson Projector / EB-E24', price: 17790, stock: 4, image: 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=400' },
-  { id: '6', name: 'Xiaomi Mi Smart Projector 2 Pro', price: 23999, stock: 8, image: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop' }
-];
+import { checkout, deleteProduct as deleteProductFromApi, getProducts, Product } from '@/lib/products-api';
 
 export default function StockScreen() {
   const router = useRouter();
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
   const [cart, setCart] = useState<any[]>([]);
   const [isCartVisible, setIsCartVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const normalizeProducts = (rawData: any[]) => {
-    return rawData.map((item) => ({
-      ...item,
-      id: String(item.id),
-      name: item.name || 'Unknown Product',
-      price: Number(item.price ?? 0),
-      stock: Number(item.stock ?? item.stock_quantity ?? item.quantity ?? item.qty ?? 0),
-      image: item.image || item.image_url || 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400',
-    }));
-  };
 
   const loadData = async () => {
     try {
@@ -56,33 +34,10 @@ export default function StockScreen() {
         setCart(JSON.parse(localCart));
       }
 
-      const localCache = await AsyncStorage.getItem('@lumen_products');
-      if (localCache) {
-        const parsed = JSON.parse(localCache);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProducts(normalizeProducts(parsed));
-          return;
-        }
-      }
-
-      const res = await fetch(PRODUCTS_URL);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const formatted = normalizeProducts(data);
-          setProducts(formatted);
-          await AsyncStorage.setItem('@lumen_products', JSON.stringify(formatted));
-          return;
-        }
-      }
-
-      const formattedInitial = normalizeProducts(INITIAL_PROJECTOR_DATA);
-      setProducts(formattedInitial);
-      await AsyncStorage.setItem('@lumen_products', JSON.stringify(formattedInitial));
+      setProducts(await getProducts());
     } catch (err) {
       console.log('Load stock error:', err);
-      const formattedInitial = normalizeProducts(INITIAL_PROJECTOR_DATA);
-      setProducts(formattedInitial);
+      setProducts([]);
     }
   };
 
@@ -92,18 +47,12 @@ export default function StockScreen() {
     }, [])
   );
 
-  const saveProducts = async (updatedList: any[]) => {
-    const formatted = normalizeProducts(updatedList);
-    setProducts(formatted);
-    await AsyncStorage.setItem('@lumen_products', JSON.stringify(formatted));
-  };
-
   const saveCart = async (newCart: any[]) => {
     setCart(newCart);
     await AsyncStorage.setItem('@lumen_cart', JSON.stringify(newCart));
   };
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: Product) => {
     const maxStock = Number(product.stock);
     if (maxStock <= 0) {
       showNotice('สินค้าหมด', 'ขออภัย สินค้านี้หมดสต็อกแล้ว');
@@ -150,29 +99,21 @@ export default function StockScreen() {
 
     setIsProcessing(true);
 
-    setTimeout(async () => {
-      const updatedProducts = products.map((prod) => {
-        const cartItem = cart.find((c) => String(c.id) === String(prod.id));
-        if (cartItem) {
-          const currentStock = Number(prod.stock) || 0;
-          const remainingStock = Math.max(0, currentStock - cartItem.quantity);
-          return { ...prod, stock: remainingStock };
-        }
-        return prod;
-      });
-
-      await saveProducts(updatedProducts);
-
+    try {
+      await checkout(cart.map((item) => ({ id: String(item.id), quantity: Number(item.quantity) })));
+      await loadData();
       const totalPaid = totalCartPrice.toLocaleString();
       await saveCart([]);
-      setIsProcessing(false);
       setIsCartVisible(false);
-
       showNotice(
         '🎉 ชำระเงินสำเร็จ!',
         `รับชำระเงินจำนวน THB ${totalPaid} เรียบร้อยแล้ว\nระบบได้ทำการปรับลดสต็อกสินค้าแล้วค่ะ`
       );
-    }, 1000);
+    } catch (error) {
+      showNotice('ไม่สามารถชำระเงินได้', error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const showNotice = (title: string, message: string) => {
@@ -184,8 +125,12 @@ export default function StockScreen() {
   };
 
   const deleteProduct = async (id: string) => {
-    const updatedList = products.filter(item => String(item.id) !== String(id));
-    await saveProducts(updatedList);
+    try {
+      await deleteProductFromApi(id);
+      await loadData();
+    } catch (error) {
+      showNotice('ไม่สามารถลบสินค้าได้', error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
+    }
   };
 
   const filteredProducts = products.filter(item =>

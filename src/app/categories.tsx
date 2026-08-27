@@ -11,8 +11,7 @@ import {
   View,
 } from 'react-native';
 
-// ดึงข้อมูลสินค้าสำรองจากไฟล์ products.json
-import localProducts from '../../products.json';
+import { getProducts, Product } from '@/lib/products-api';
 
 const PROJECTOR_CATEGORIES = [
   { id: '1', name: 'Cozy Home Cinema', icon: 'film-outline' },
@@ -25,7 +24,7 @@ const PROJECTOR_CATEGORIES = [
 
 export default function CategoriesScreen() {
   const router = useRouter();
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -33,17 +32,9 @@ export default function CategoriesScreen() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://119.59.102.161:3005/api/products');
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setProducts(data);
-          return;
-        }
-      }
-      setProducts(localProducts);
+      setProducts(await getProducts());
     } catch {
-      setProducts(localProducts);
+      setProducts([]);
     }
   };
 
@@ -148,7 +139,7 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 12,
-    justify: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: { fontWeight: 'bold', color: '#FFF', fontSize: 11 },
@@ -194,7 +185,7 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 14,
     backgroundColor: '#F5F2EC',
-    justify: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
   },
@@ -232,7 +223,7 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
     height: '100%',
   },
   tabText: { fontSize: 10, color: '#A19288', fontWeight: '600', marginTop: 4 },

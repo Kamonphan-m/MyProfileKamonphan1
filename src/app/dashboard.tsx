@@ -17,10 +17,9 @@ import {
   View
 } from 'react-native';
 
-import localProductsData from '../../products.json';
+import { checkout, deleteProduct, getProducts, Product } from '@/lib/products-api';
 
 const { width } = Dimensions.get('window');
-const API_BASE_URL = 'http://119.59.102.161:3005/api';
 
 interface CartItem {
   id: string;
@@ -31,63 +30,12 @@ interface CartItem {
   stock: number;
 }
 
-const LOCAL_MOCK_PRODUCTS = [
-  {
-    id: "1",
-    name: "WANBO X2 Max Smart Android Projector",
-    price: 5990,
-    stock: 0,
-    location: "คลังสินค้าหลัก",
-    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
-  },
-  {
-    id: "2",
-    name: "WANBO Mini Projector",
-    price: 3502,
-    stock: 0,
-    location: "คลังสินค้าหลัก",
-    image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop"
-  },
-  {
-    id: "3",
-    name: "WANBO Projector Android 9.0 / Mozart",
-    price: 17590,
-    stock: 0,
-    location: "คลังสินค้าหลัก",
-    image: "https://images.unsplash.com/photo-1601944179066-297bff591b3e?w=500&auto=format&fit=crop"
-  },
-  {
-    id: "4",
-    name: "ACER ACER Projector x 1328wi",
-    price: 17390,
-    stock: 0,
-    location: "คลังสินค้าหลัก",
-    image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=500&auto=format&fit=crop"
-  },
-  {
-    id: "5",
-    name: "Epson EPSON Projector / EB-E24",
-    price: 17790,
-    stock: 4,
-    location: "คลังสินค้าหลัก",
-    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop"
-  },
-  {
-    id: "6",
-    name: "Xiaomi Mi Smart Projector 2 Pro",
-    price: 23999,
-    stock: 8,
-    location: "คลังสินค้าหลัก",
-    image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&auto=format&fit=crop"
-  }
-];
-
 export default function DashboardScreen() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarAnim] = useState(new Animated.Value(-width * 0.75));
 
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -95,37 +43,12 @@ export default function DashboardScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // 🛠️ ฟังก์ชันแปลงข้อมูลสินค้าให้รองรับชื่อฟิลด์สต็อกทุกรูปแบบ
-  const formatProductsData = (rawData: any[]) => {
-    return rawData.map((item) => ({
-      ...item,
-      stock: Number(
-        item.stock ?? 
-        item.stock_quantity ?? 
-        item.quantity ?? 
-        item.qty ?? 
-        0
-      ),
-      price: Number(item.price ?? 0),
-    }));
-  };
-
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/products`);
-      if (!response.ok) throw new Error('API Response Error');
-      
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setProducts(formatProductsData(data));
-      } else {
-        const fallback = localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS;
-        setProducts(formatProductsData(fallback));
-      }
-    } catch (error) {
-      const fallback = localProductsData.length > 0 ? localProductsData : LOCAL_MOCK_PRODUCTS;
-      setProducts(formatProductsData(fallback));
+      setProducts(await getProducts());
+    } catch {
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -148,7 +71,7 @@ export default function DashboardScreen() {
   };
 
   // 🛒 ฟังก์ชันจัดการตะกร้าสินค้า
-  const addToCart = (product: any) => {
+  const addToCart = (product: Product) => {
     if (product.stock <= 0) {
       Alert.alert('สินค้าหมด', 'ขออภัย สินค้ารายการนี้หมดสต็อกแล้ว');
       return;
@@ -212,9 +135,14 @@ export default function DashboardScreen() {
         {
           text: 'ลบสินค้า',
           style: 'destructive',
-          onPress: () => {
-            setProducts((prev) => prev.filter((p) => p.id !== productId));
-            Alert.alert('สำเร็จ', 'ลบรายการสินค้าเรียบร้อยแล้ว');
+          onPress: async () => {
+            try {
+              await deleteProduct(productId);
+              await fetchProducts();
+              Alert.alert('สำเร็จ', 'ลบรายการสินค้าเรียบร้อยแล้ว');
+            } catch (error) {
+              Alert.alert('ไม่สามารถลบสินค้าได้', error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
+            }
           },
         },
       ]
@@ -231,19 +159,16 @@ export default function DashboardScreen() {
         { text: 'ยกเลิก', style: 'cancel' },
         {
           text: 'สั่งซื้อเลย',
-          onPress: () => {
-            setProducts((prevProducts) =>
-              prevProducts.map((prod) => {
-                const cartItem = cart.find((item) => item.id === prod.id);
-                if (cartItem) {
-                  return { ...prod, stock: prod.stock - cartItem.quantity };
-                }
-                return prod;
-              })
-            );
-            setCart([]);
-            setIsCartOpen(false);
-            Alert.alert('สั่งซื้อสำเร็จ! 🎉', 'ระบบได้บันทึกคำสั่งซื้อของคุณเรียบร้อยแล้ว');
+          onPress: async () => {
+            try {
+              await checkout(cart.map((item) => ({ id: item.id, quantity: item.quantity })));
+              await fetchProducts();
+              setCart([]);
+              setIsCartOpen(false);
+              Alert.alert('สั่งซื้อสำเร็จ! 🎉', 'ระบบได้บันทึกคำสั่งซื้อของคุณเรียบร้อยแล้ว');
+            } catch (error) {
+              Alert.alert('ไม่สามารถสั่งซื้อได้', error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
+            }
           },
         },
       ]

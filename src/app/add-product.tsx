@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -14,8 +13,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
- 
-const API_BASE_URL = 'http://119.59.102.161:3005/api';
+import { createProduct, getProduct, ProductInput, updateProduct } from '@/lib/products-api';
  
 export default function AddProductScreen() {
   const router = useRouter();
@@ -34,35 +32,15 @@ export default function AddProductScreen() {
     }
   }, [editId]);
  
-  // ✨ ดึงข้อมูลสินค้าจาก AsyncStorage มาหยอดใส่ช่องให้อัตโนมัติ
   const loadProductForEdit = async () => {
     try {
-      // 1. ดึงข้อมูลจาก Local Storage ในเครื่องก่อน
-      const storedData = await AsyncStorage.getItem('@lumen_products');
-      if (storedData) {
-        const localProducts = JSON.parse(storedData);
-        const item = localProducts.find((p: any) => String(p.id) === String(editId));
-        if (item) {
-          setName(item.name || '');
-          setPrice(item.price ? String(item.price) : '');
-          setStock(item.stock ? String(item.stock) : '');
-          setImageUrl(item.image || '');
-          return;
-        }
-      }
- 
-      // 2. ถ้าในเครื่องไม่มี ลองหาจาก Server (เผื่อไว้)
-      const response = await fetch(`${API_BASE_URL}/products`);
-      const products = await response.json();
-      const item = products.find((p: any) => String(p.id) === String(editId));
-      if (item) {
-        setName(item.name || '');
-        setPrice(item.price ? String(item.price) : '');
-        setStock(item.stock ? String(item.stock) : '');
-        setImageUrl(item.image || '');
-      }
+      const item = await getProduct(editId!);
+      setName(item.name || '');
+      setPrice(String(item.price ?? ''));
+      setStock(String(item.stock ?? ''));
+      setImageUrl(item.image || '');
     } catch (error) {
-      console.log("Error loading product for edit:", error);
+      showAlert('ไม่สามารถโหลดสินค้าได้', error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
     }
   };
  
@@ -91,51 +69,28 @@ export default function AddProductScreen() {
       finalImg = 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&auto=format&fit=crop';
     }
  
-    const payload = {
-      name,
+    const payload: ProductInput = {
+      name: name.trim(),
       price: cleanPrice,
       stock: cleanStock,
       category: 'Projector',
-      brand: 'LUMEN',
-      location: 'Main Warehouse',
       status: 'Active',
       image: finalImg
     };
  
-    // ส่ง Server สำรอง
     try {
-      const method = editId ? 'PUT' : 'POST';
-      const endpoint = editId ? `${API_BASE_URL}/products/${editId}` : `${API_BASE_URL}/products`;
-      await fetch(endpoint, {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (e) {
-      console.log("Server error ignored, saving locally.");
-    }
- 
-    // เซฟลงเครื่องเสมอ
-    try {
-      const storedData = await AsyncStorage.getItem('@lumen_products');
-      let localProducts = storedData ? JSON.parse(storedData) : [];
-     
       if (editId) {
-        localProducts = localProducts.map((p: any) =>
-          String(p.id) === String(editId) ? { ...p, ...payload, id: p.id } : p
-        );
+        await updateProduct(editId, payload);
       } else {
-        localProducts.unshift({ id: Date.now().toString(), ...payload });
+        await createProduct(payload);
       }
-      await AsyncStorage.setItem('@lumen_products', JSON.stringify(localProducts));
- 
-      setLoading(false);
       showAlert('Successful', 'Projector database has been updated.', () => {
         router.replace('/stock');
       });
     } catch (error) {
+      showAlert('ไม่สามารถบันทึกสินค้าได้', error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
+    } finally {
       setLoading(false);
-      showAlert('Error', 'Failed to save product locally.');
     }
   };
  
